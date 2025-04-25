@@ -46,6 +46,9 @@ dependencies {
 
         testFramework(TestFrameworkType.Platform)
     }
+    implementation("org.json:json:20231013")
+    implementation("org.graalvm.polyglot:polyglot:23.1.2")
+    implementation("org.graalvm.polyglot:js:24.2.0")
 }
 
 // Configure IntelliJ Platform Gradle Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-extension.html
@@ -131,6 +134,11 @@ tasks {
 
     publishPlugin {
         dependsOn(patchChangelog)
+    }
+
+    test {
+        // Set the logging configuration file
+        systemProperty("java.util.logging.config.file", "${project.projectDir}/src/test/resources/test-log.properties")
     }
 }
 
