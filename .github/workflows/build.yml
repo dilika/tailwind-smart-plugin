@@ -191,6 +191,12 @@ jobs:
           distribution: zulu
           java-version: 21
 
+      # Setup Gradle with dependency caching
+      - name: Setup Gradle Dependencies
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-home-cache-cleanup: true
+      
       # Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
