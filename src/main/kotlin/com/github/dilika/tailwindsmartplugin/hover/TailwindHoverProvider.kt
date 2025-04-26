@@ -1,10 +1,11 @@
 package com.github.dilika.tailwindsmartplugin.hover
 
+import com.github.dilika.tailwindsmartplugin.utils.TailwindUtils
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.xml.XmlAttributeValue
-import com.github.dilika.tailwindsmartplugin.utils.TailwindUtils
+import org.json.JSONArray
 
 class TailwindHoverProvider : DocumentationProvider {
     private val logger = Logger.getInstance(TailwindHoverProvider::class.java)
