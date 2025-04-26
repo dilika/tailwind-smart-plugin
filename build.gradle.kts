@@ -1,5 +1,10 @@
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
+import org.gradle.api.DefaultTask
+import org.gradle.api.provider.Property
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.options.Option
 
 plugins {
     id("java") // Java support
@@ -151,4 +156,39 @@ changelog {
     version.set(project.property("pluginVersion").toString())
     groups.set(emptyList())
     repositoryUrl.set(project.property("pluginRepositoryUrl").toString())
+}
+
+// Custom task to get changelog content
+abstract class GetChangelogTask : DefaultTask() {
+    @get:Input
+    @get:Option(option = "unreleased", description = "Get unreleased changelog")
+    val unreleased: Property<Boolean> = project.objects.property(Boolean::class.java).convention(false)
+
+    @get:Input
+    @get:Option(option = "no-header", description = "Exclude header from output")
+    val noHeader: Property<Boolean> = project.objects.property(Boolean::class.java).convention(false)
+
+    @TaskAction
+    fun run() {
+        val changelog = project.extensions.getByType<org.jetbrains.changelog.ChangelogPluginExtension>()
+        val content = if (unreleased.get()) {
+            changelog.getUnreleased().toText()
+        } else {
+            changelog.getLatest().toText()
+        }
+
+        val output = if (noHeader.get()) {
+            // Remove the header (first line) from the content
+            content.lines().drop(1).joinToString("\n")
+        } else {
+            content
+        }
+
+        println(output)
+    }
+}
+
+tasks.register<GetChangelogTask>("getChangelog") {
+    description = "Get changelog content"
+    group = "documentation"
 }
