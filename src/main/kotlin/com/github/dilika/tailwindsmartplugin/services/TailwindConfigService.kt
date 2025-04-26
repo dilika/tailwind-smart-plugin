@@ -16,6 +16,7 @@ class TailwindConfigService(private val project: Project) {
     private var projectCacheMap: MutableMap<String, Any> = mutableMapOf()
     
     companion object {
+        @Suppress("unused") // Used via reflection
         fun getInstance(project: Project): TailwindConfigService {
             return project.getService(TailwindConfigService::class.java)
         }
@@ -40,7 +41,7 @@ class TailwindConfigService(private val project: Project) {
     /**
      * Detect a Tailwind CSS configuration file in the project
      */
-    fun detectTailwindConfig() {
+    private fun detectTailwindConfig() {
         logger.info("Detecting Tailwind config for project: ${project.name}")
         
         try {
@@ -72,6 +73,7 @@ class TailwindConfigService(private val project: Project) {
     /**
      * Get Tailwind classes for a specific project path
      */
+    @Suppress("unused") // May be used in future implementations
     fun getTailwindClasses(projectPath: String): List<String> {
         // In a real implementation, this would parse the Tailwind config
         // and generate classes based on it. For now, return an empty list
@@ -82,6 +84,7 @@ class TailwindConfigService(private val project: Project) {
     /**
      * Get detailed Tailwind class data for a specific project path
      */
+    @Suppress("unused") // May be used in future implementations
     fun getTailwindClassData(projectPath: String): Map<String, JSONObject> {
         // In a real implementation, this would parse the Tailwind config
         // and generate detailed class data. For now, return an empty map

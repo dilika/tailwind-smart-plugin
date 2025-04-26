@@ -52,7 +52,7 @@ class TailwindToolWindowContent(private val project: Project) {
         panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
         
         // Config path information
-        val configPathLabel = JBLabel("Tailwind Config Path: ")
+        val configPathLabel = JBLabel("Tailwind config path: ")
         panel.add(configPathLabel)
         
         val configPath = configService.getTailwindConfigPath() ?: "Not found"

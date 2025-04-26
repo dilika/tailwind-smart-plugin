@@ -166,14 +166,14 @@ class TailwindConfigDetector(private val project: Project) {
         }
         
         // Trouver le meilleur fichier de configuration à utiliser (priorité: tailwind.config.js > tailwind.config.ts > postcss.config.js)
-        val configFile = configFiles.sortedWith(compareBy { 
-            when {
-                it.name == "tailwind.config.js" -> 0
-                it.name == "tailwind.config.mjs" -> 1
-                it.name == "tailwind.config.ts" -> 2
-                it.name == "postcss.config.js" -> 3
-                it.name == "postcss.config.mjs" -> 4
-                it.name == "postcss.config.ts" -> 5
+        val configFile = configFiles.sortedWith(compareBy { file -> 
+            when (file.name) {
+                "tailwind.config.js" -> 0
+                "tailwind.config.mjs" -> 1
+                "tailwind.config.ts" -> 2
+                "postcss.config.js" -> 3
+                "postcss.config.mjs" -> 4
+                "postcss.config.ts" -> 5
                 else -> 6
             }
         }).firstOrNull()

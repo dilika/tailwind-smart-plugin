@@ -1,11 +1,8 @@
 package com.github.dilika.tailwindsmartplugin.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.XmlPatterns
-import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.xml.XmlAttributeValue
-import com.intellij.psi.PsiElement
 import com.intellij.openapi.diagnostic.Logger
 
 /**

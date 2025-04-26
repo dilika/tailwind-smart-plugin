@@ -113,7 +113,7 @@ class TailwindHoverProvider : DocumentationProvider {
             val end = start + className.length
             
             // Check if cursor is within this class
-            if (cursorOffset >= start && cursorOffset <= end) {
+            if (cursorOffset in start..end) {
                 return className
             }
             

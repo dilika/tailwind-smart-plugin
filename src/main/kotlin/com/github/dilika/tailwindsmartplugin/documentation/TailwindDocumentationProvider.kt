@@ -6,7 +6,6 @@ import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.xml.XmlAttributeValue
-import org.json.JSONObject
 
 /**
  * Provides documentation for Tailwind CSS classes
@@ -119,7 +118,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
             val end = start + className.length
             
             // Check if cursor is within this class
-            if (cursorOffset >= start && cursorOffset <= end) {
+            if (cursorOffset in start..end) {
                 return className
             }
             

@@ -1,9 +1,7 @@
 package com.github.dilika.tailwindsmartplugin.listeners
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -12,23 +10,17 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.messages.MessageBusConnection
-import com.github.dilika.tailwindsmartplugin.services.TailwindConfigService
 import com.github.dilika.tailwindsmartplugin.utils.TailwindUtils
-import com.intellij.execution.ExecutionListener
-import com.intellij.execution.ExecutionManager
-import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.task.ProjectTaskListener
-import com.intellij.task.ProjectTaskManager
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.startup.StartupActivity
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Project listener for Tailwind CSS integration.
+ * Project startup activity for Tailwind CSS integration.
  * Monitors project opening/closing and file changes related to Tailwind configuration.
  * Also listens for build and test events to refresh the cache.
  */
-@Suppress("OVERRIDE_DEPRECATION")
-class TailwindProjectListener : ProjectManagerListener {
+class TailwindProjectListener : StartupActivity, DumbAware {
     private val logger = Logger.getInstance(TailwindProjectListener::class.java)
     private val connections = ConcurrentHashMap<String, MessageBusConnection>()
     private val tailwindConfigFileNames = listOf(
@@ -38,7 +30,7 @@ class TailwindProjectListener : ProjectManagerListener {
         "tailwind.config.ts"
     )
     
-    override fun projectOpened(project: Project) {
+    override fun runActivity(project: Project) {
         logger.info("Project opened: ${project.name}")
         
         // Check if the project uses Tailwind
@@ -53,25 +45,27 @@ class TailwindProjectListener : ProjectManagerListener {
             // Register build and test listeners
             registerBuildListener(project)
             registerExecutionListener(project)
+            registerProjectCloseListener(project)
         } catch (e: Exception) {
-            logger.error("Error detecting Tailwind: ${e.message}")
+            logger.warn("Failed to setup Tailwind: ${e.message}")
         }
     }
     
-    override fun projectClosed(project: Project) {
-        logger.info("Project closed: ${project.name}")
-        unregisterFileListener(project)
-        TailwindUtils.clearProjectCache(project)
-    }
-    
-    override fun projectClosing(project: Project) {
-        logger.info("Project closing: ${project.name}")
-        
-        // Remove the file listener
-        unregisterFileListener(project)
-        
-        // Clean the cache for this project
-        TailwindUtils.clearProjectCache(project)
+    /**
+     * Register a listener to clean up when the project is closed
+     */
+    private fun registerProjectCloseListener(project: Project) {
+        project.messageBus.connect().subscribe(Project.TOPIC, object : Project.ProjectListener {
+            override fun projectClosing(project: Project) {
+                logger.info("Project closing: ${project.name}")
+                
+                // Remove the file listener
+                unregisterFileListener(project)
+                
+                // Clean the cache for this project
+                TailwindUtils.clearProjectCache(project)
+            }
+        })
     }
     
     private fun setupFileWatchers(project: Project) {
