@@ -1,41 +1,36 @@
 [versions]
-# libraries
+# Library versions
 junit = "4.13.2"
 opentest4j = "1.3.0"
-[versions]
+json = "20231013"
+
 # Gradle plugin versions
 changelog = "2.2.0"
 gradleIntelliJPlugin = "1.16.1"
+intelliJPlatform = "2.5.0"
 kotlin = "1.9.22"
 kover = "0.7.5"
 qodana = "2023.3.1"
 
-# Dependency versions
-json = "20231013"
+# GraalVM dependencies
+graalvm-sdk = "23.0.1"
+graalvm-js = "23.0.1"
+graalvm-js-scriptengine = "23.0.1"
 
 [libraries]
 # Project dependencies
 json = { group = "org.json", name = "json", version.ref = "json" }
-
-[plugins]
-changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
-gradleIntelliJPlugin = { id = "org.jetbrains.intellij", version.ref = "gradleIntelliJPlugin" }
-kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
-qodana = { id = "org.jetbrains.qodana", version.ref = "qodana" }
-# plugins
-changelog = "2.2.1"
-intelliJPlatform = "2.5.0"
-kotlin = "2.1.20"
-kover = "0.9.1"
-qodana = "2024.3.4"
-
-[libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 opentest4j = { group = "org.opentest4j", name = "opentest4j", version.ref = "opentest4j" }
 
+# GraalVM dependencies
+graalvm-sdk = { group = "org.graalvm.sdk", name = "graal-sdk", version.ref = "graalvm-sdk" }
+graalvm-js = { group = "org.graalvm.js", name = "js", version.ref = "graalvm-js" }
+graalvm-js-scriptengine = { group = "org.graalvm.js", name = "js-scriptengine", version.ref = "graalvm-js-scriptengine" }
+
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
+intellij = { id = "org.jetbrains.intellij", version.ref = "gradleIntelliJPlugin" }
 intelliJPlatform = { id = "org.jetbrains.intellij.platform", version.ref = "intelliJPlatform" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

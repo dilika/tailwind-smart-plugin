@@ -106,14 +106,34 @@ jobs:
           distribution: zulu
           java-version: 21
 
-      # Check settings.gradle.kts content
-      - name: Check settings.gradle.kts
+      # Examine the problematic settings.gradle.kts file
+      - name: Display settings.gradle.kts
         run: cat settings.gradle.kts
         
-      # Fix settings.gradle.kts
+      # Fix settings.gradle.kts by removing VERSION_CATALOGS reference
       - name: Fix settings.gradle.kts
         run: |
+          # Create a new settings.gradle.kts without the VERSION_CATALOGS reference
           cat > settings.gradle.kts << 'EOL'
+          rootProject.name = "tailwind-smart-plugin"
+      
+          // Configure Gradle Enterprise
+          plugins {
+              id("com.gradle.enterprise") version "3.16.1"
+          }
+      
+          // Configure Gradle Enterprise Plugin
+          gradleEnterprise {
+              buildScan {
+                  termsOfServiceUrl = "https://gradle.com/terms-of-service"
+                  termsOfServiceAgree = "yes"
+              }
+          }
+          EOL
+          
+          # Verify the new content
+          echo "Updated settings.gradle.kts content:"
+          cat settings.gradle.kts
           rootProject.name = "tailwind-smart-plugin"
           
           // Configure Gradle Enterprise

@@ -1,6 +1,211 @@
 package com.github.dilika.tailwindsmartplugin.toolWindow
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.content.ContentFactory
+import com.github.dilika.tailwindsmartplugin.services.TailwindConfigService
+import java.awt.BorderLayout
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.BoxLayout
+
+class TailwindToolWindowFactory : ToolWindowFactory {
+    private val LOG = logger<TailwindToolWindowFactory>()
+
+    override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+        val toolWindowContent = TailwindToolWindowContent(project)
+        val content = ContentFactory.getInstance().createContent(
+            toolWindowContent.getContent(),
+            "Tailwind CSS",
+            false
+        )
+        toolWindow.contentManager.addContent(content)
+    }
+}
+
+class TailwindToolWindowContent(private val project: Project) {
+    private val configService = project.service<TailwindConfigService>()
+    
+    fun getContent(): JComponent {
+        val panel = JBPanel<JBPanel<*>>()
+        panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+        
+        // Config path information
+        val configPathLabel = JBLabel("Tailwind Config Path: ")
+        panel.add(configPathLabel)
+        
+        val configPath = configService.getTailwindConfigPath() ?: "Not found"
+        val configPathValue = JBLabel(configPath)
+        panel.add(configPathValue)
+        
+        // Additional Tailwind information can be added here
+        
+        val scrollPane = JBScrollPane(panel)
+        
+        val mainPanel = JPanel(BorderLayout())
+        mainPanel.add(scrollPane, BorderLayout.CENTER)
+        
+        return mainPanel
+    }
+}
+            "Tailwind CSS",
+            false
+        )
+        toolWindow.contentManager.addContent(content)
+    }
+}
+
+class TailwindToolWindowContent(private val project: Project) {
+    private val configService = project.service<TailwindConfigService>()
+    
+    fun getContent(): JComponent {
+        val panel = JBPanel<JBPanel<*>>()
+        panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+        
+        // Config path information
+        val configPathLabel = JBLabel("Tailwind Config Path: ")
+        panel.add(configPathLabel)
+        
+        val configPath = configService.getTailwindConfigPath() ?: "Not found"
+        val configPathValue = JBLabel(configPath)
+        panel.add(configPathValue)
+        
+        // Additional Tailwind information can be added here
+        
+        val scrollPane = JBScrollPane(panel)
+        
+        val mainPanel = JPanel(BorderLayout())
+        mainPanel.add(scrollPane, BorderLayout.CENTER)
+        
+        return mainPanel
+    }
+}
+
+class TailwindToolWindowContent(private val project: Project) {
+    private val configService = project.service<TailwindConfigService>()
+    
+    fun getContent(): JComponent {
+        val panel = JBPanel<JBPanel<*>>()
+        panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+        
+        // Config path information
+        val configPathLabel = JBLabel("Tailwind Config Path: ")
+        panel.add(configPathLabel)
+        
+        val configPath = configService.getTailwindConfigPath() ?: "Not found"
+        val configPathValue = JBLabel(configPath)
+        panel.add(configPathValue)
+        
+        // Additional Tailwind information can be added here
+        
+        val scrollPane = JBScrollPane(panel)
+        
+        val mainPanel = JPanel(BorderLayout())
+        mainPanel.add(scrollPane, BorderLayout.CENTER)
+        
+        return mainPanel
+    }
+}
+
+class TailwindToolWindowContent(private val project: Project) {
+    private val configService = project.service<TailwindConfigService>()
+    
+    fun getContent(): JComponent {
+        val panel = JBPanel<JBPanel<*>>()
+        panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+        
+        // Config path information
+        val configPathLabel = JBLabel("Tailwind Config Path: ")
+        panel.add(configPathLabel)
+        
+        val configPath = configService.getTailwindConfigPath() ?: "Not found"
+        val configPathValue = JBLabel(configPath)
+        panel.add(configPathValue)
+        
+        // Additional Tailwind information can be added here
+        
+        val scrollPane = JBScrollPane(panel)
+        
+        val mainPanel = JPanel(BorderLayout())
+        mainPanel.add(scrollPane, BorderLayout.CENTER)
+        
+        return mainPanel
+    }
+}
+        val content = ContentFactory.getInstance().createContent(
+            toolWindowContent.getContent(),
+            "Tailwind CSS",
+            false
+        )
+        toolWindow.contentManager.addContent(content)
+    }
+}
+
+class TailwindToolWindowContent(private val project: Project) {
+    private val configService = project.service<TailwindConfigService>()
+    
+    fun getContent(): JComponent {
+        val panel = JBPanel<JBPanel<*>>()
+        panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+        
+        // Config path information
+        val configPathLabel = JBLabel("Tailwind Config Path: ")
+        panel.add(configPathLabel)
+        
+        val configPath = configService.getTailwindConfigPath() ?: "Not found"
+        val configPathValue = JBLabel(configPath)
+        panel.add(configPathValue)
+        
+        // Additional Tailwind information can be added here
+        
+        val scrollPane = JBScrollPane(panel)
+        
+        val mainPanel = JPanel(BorderLayout())
+        mainPanel.add(scrollPane, BorderLayout.CENTER)
+        
+        return mainPanel
+    }
+}
+            toolWindowContent.getContent(),
+            "Tailwind CSS",
+            false
+        )
+        toolWindow.contentManager.addContent(content)
+    }
+}
+
+class TailwindToolWindowContent(private val project: Project) {
+    private val configService = project.service<TailwindConfigService>()
+    
+    fun getContent(): JComponent {
+        val panel = JBPanel<JBPanel<*>>()
+        panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+        
+        // Config path information
+        val configPathLabel = JBLabel("Tailwind Config Path: ")
+        panel.add(configPathLabel)
+        
+        val configPath = configService.getTailwindConfigPath() ?: "Not found"
+        val configPathValue = JBLabel(configPath)
+        panel.add(configPathValue)
+        
+        // Additional Tailwind information can be added here
+        
+        val scrollPane = JBScrollPane(panel)
+        
+        val mainPanel = JPanel(BorderLayout())
+        mainPanel.add(scrollPane, BorderLayout.CENTER)
+        
+        return mainPanel
+    }
+}
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow

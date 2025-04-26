@@ -8,11 +8,11 @@ import org.gradle.api.tasks.options.Option
 
 plugins {
     id("java") // Java support
-    id("org.jetbrains.kotlin.jvm") version "1.9.22" // Kotlin support
-    id("org.jetbrains.intellij") version "1.16.1" // IntelliJ Plugin
-    id("org.jetbrains.changelog") version "2.2.0" // Changelog Plugin
-    id("org.jetbrains.qodana") version "2023.3.1" // Qodana Plugin
-    id("org.jetbrains.kotlinx.kover") version "0.7.5" // Kover Plugin
+    alias(libs.plugins.kotlin) // Kotlin support
+    alias(libs.plugins.intellij) // IntelliJ Plugin
+    alias(libs.plugins.changelog) // Changelog Plugin
+    alias(libs.plugins.qodana) // Qodana Plugin
+    alias(libs.plugins.kover) // Kover Plugin
 }
 
 group = project.property("pluginGroup").toString()
@@ -31,11 +31,11 @@ kotlin {
 // Add dependencies needed by your plugin
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
-    implementation("org.json:json:20231013")
+    implementation(libs.json)
     // GraalVM dependencies with stable version
-    implementation("org.graalvm.sdk:graal-sdk:22.3.0")
-    implementation("org.graalvm.js:js:22.3.0")
-    implementation("org.graalvm.js:js-scriptengine:22.3.0")
+    implementation(libs.graalvm.sdk)
+    implementation(libs.graalvm.js)
+    implementation(libs.graalvm.js.scriptengine)
 }
 
 // IntelliJ Plugin configuration
@@ -84,6 +84,12 @@ tasks {
         """.trimIndent())
     }
 
+    // Configure the getChangelog task from the changelog plugin
+    getChangelog {
+        version = project.property("pluginVersion").toString()
+        // Use this task for GitHub Actions instead of our custom task
+    }
+
     // Test configuration
     test {
         testLogging {
@@ -116,13 +122,13 @@ tasks {
 
 // Configure Changelog
 changelog {
-    version.set(project.property("pluginVersion").toString())
+    version = project.property("pluginVersion").toString()
     groups.set(emptyList())
     repositoryUrl.set(project.property("pluginRepositoryUrl").toString())
 }
 
 // Custom task to get changelog content that's simpler and more reliable
-abstract class GetChangelogTask : DefaultTask() {
+abstract class CustomChangelogTask : DefaultTask() {
     @get:Input
     @get:Option(option = "unreleased", description = "Get unreleased changelog")
     val unreleased: Property<Boolean> = project.objects.property(Boolean::class.java).convention(false)
@@ -143,9 +149,9 @@ abstract class GetChangelogTask : DefaultTask() {
     }
 }
 
-// This task name is critical - GitHub Actions is looking for it
-tasks.register<GetChangelogTask>("getChangelog") {
-    description = "Get changelog content"
+// Use a different name for our custom task to avoid conflicts with changelog plugin's getChangelog
+tasks.register<CustomChangelogTask>("generateChangelogContent") {
+    description = "Get custom changelog content"
     group = "documentation"
 }
 

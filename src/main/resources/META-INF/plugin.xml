@@ -33,14 +33,24 @@
     <!-- Extension points defined by the plugin -->
     <extensions defaultExtensionNs="com.intellij">
         <!-- Services -->
-        <applicationService
+        <projectService
                 serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigService"/>
         
         <!-- Auto-completion for Tailwind CSS classes -->
         <completion.contributor
                 language="any"
                 implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor"/>
+                
+        <!-- Project startup activity -->
+        <postStartupActivity
+                implementation="com.github.dilika.tailwindsmartplugin.startup.TailwindStartupActivity"/>
     </extensions>
+
+    <applicationListeners>
+        <!-- Project listener for detecting file changes -->
+        <listener class="com.github.dilika.tailwindsmartplugin.listeners.TailwindProjectListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    </applicationListeners>
 
     <actions>
         <!-- Add your actions here -->

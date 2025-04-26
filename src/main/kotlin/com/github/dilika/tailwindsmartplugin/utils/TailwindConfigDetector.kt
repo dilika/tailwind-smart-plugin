@@ -627,4 +627,4 @@ class TailwindConfigDetector(private val project: Project) {
             """.trimIndent()
         }
     }
-} 
+}
