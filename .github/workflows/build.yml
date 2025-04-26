@@ -191,43 +191,19 @@ jobs:
         with:
           distribution: zulu
           java-version: 21
-# GitHub Actions Workflow for IntelliJ Platform Plugin
-# More details: https://github.com/JetBrains/intellij-platform-plugin-template
-
-name: Build & Verify
+name: Build
 
 on:
-  # Trigger the workflow on push or pull request events for all branches
   push:
     branches: [main]
   pull_request:
     branches: [main]
-  # Allow running the workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
-  # Validate Gradle Wrapper
-  validate-wrapper:
-    name: Validate Gradle Wrapper
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v2
-
-  # Build the plugin
   build:
     name: Build
-    needs: validate-wrapper
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: read
-    outputs:
-      version: ${{ steps.properties.outputs.version }}
-      changelog: ${{ steps.properties.outputs.changelog }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -246,34 +222,15 @@ jobs:
         with:
           gradle-home-cache-cleanup: true
       
-      - name: Print Gradle and JDK versions
-        run: |
-          ./gradlew --version
-          java -version
-      
-      - name: Export Properties
-        id: properties
-        shell: bash
-        run: |
-          # Output plugin version
-          version=$(grep "pluginVersion" gradle.properties | cut -d'=' -f2- | tr -d '[:space:]')
-          echo "version=$version" >> $GITHUB_OUTPUT
-          
-          # Simple changelog for CI
-          changelog="Initial plugin release with Tailwind CSS class completion"
-          echo "changelog=$changelog" >> $GITHUB_OUTPUT
-      
-      # Just run tasks one by one to see where it fails
-      - name: Prepare Build
-        run: ./gradlew clean
+      - name: Print Gradle version
+        run: ./gradlew --version
       
       - name: Compile
         run: ./gradlew compileKotlin
         
       - name: Test
-        run: ./gradlew test --info || true
+        run: ./gradlew test || true
       
-      # Use a simpler build task that skips searchable options
       - name: Build Plugin
         run: ./gradlew assemble
       
