@@ -224,6 +224,12 @@ tasks.register<GetChangelogTask>("customGetChangelog") {
     group = "documentation"
 }
 
+// Register the task with a different name to avoid conflicts with the changelog plugin
+tasks.register<GetChangelogTask>("customGetChangelogForGitHub") {
+    description = "Get changelog content (for GitHub workflow)"
+    group = "documentation"
+}
+
 // Simple test task to verify task execution
 tasks.register("testTask") {
     description = "Test task to verify task execution"
