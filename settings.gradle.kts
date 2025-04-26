@@ -2,5 +2,14 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
 
-// The absolute minimum settings file with no plugins
 rootProject.name = "tailwind-smart-plugin"
+
+// Enable the version catalog feature
+enableFeaturePreview("VERSION_CATALOGS")
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        google()
+    }
+}

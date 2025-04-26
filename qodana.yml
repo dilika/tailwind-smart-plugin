@@ -1,6 +1,30 @@
 # Qodana configuration:
 # https://www.jetbrains.com/help/qodana/qodana-yaml.html
+# Qodana configuration file for IntelliJ Platform Plugin
+# More details: https://www.jetbrains.com/help/qodana/qodana-yaml.html
 
+version: "1.0"
+profile:
+  name: qodana.recommended
+exclude:
+  - name: All
+    paths:
+      - .github/
+      - .gradle/
+      - gradle/
+      - build/
+      - .qodana/
+      - .idea/
+include:
+  - name: Kotlin
+  - name: JavaPerformance
+  - name: JavaRedundantTypeConversion
+  - name: JavaOptimizationBooleanIdioms
+  - name: GroovyPerformance
+  - name: UnnecessaryBoxing
+  - name: UnnecessaryUnboxing
+  - name: JavaPluginRegistration
+  - name: UnstableApiUsage
 version: 1.0
 linter: jetbrains/qodana-jvm-community:2024.2
 projectJDK: "17"

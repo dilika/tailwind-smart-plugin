@@ -80,7 +80,30 @@
                     anchor="right"
                     factoryClass="com.github.dilika.tailwindsmartplugin.toolWindow.TailwindToolWindowFactory"/>
     </extensions>
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <id>com.github.dilika.tailwindsmartplugin</id>
+    <name>Tailwind Smart Completion</name>
+    <vendor>dilika</vendor>
 
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Code completion for Tailwind CSS classes -->
+        <completion.contributor
+                language="any"
+                implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor"/>
+
+        <!-- Application service for global Tailwind config access -->
+        <applicationService
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigService"/>
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+</idea-plugin>
     <!-- Project listener to detect Tailwind configuration changes -->
     <projectListeners>
         <listener class="com.github.dilika.tailwindsmartplugin.listeners.TailwindProjectListener"
