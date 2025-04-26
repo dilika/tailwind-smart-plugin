@@ -1,0 +1,58 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <id>com.github.dilika.tailwindsmartplugin</id>
+    <name>Tailwind Smart Completion</name>
+    <vendor>dilika</vendor>
+    
+    <description><![CDATA[
+    <h1>Tailwind CSS Support</h1>
+    <p>This plugin adds Tailwind CSS support to IntelliJ IDE.</p>
+
+    <h2>Features</h2>
+    <ul>
+        <li>Tailwind CSS class auto-completion</li>
+        <li>Documentation on hover for classes</li>
+        <li>Automatic detection of project's Tailwind configuration</li>
+        <li>Support for custom classes</li>
+    </ul>
+
+    <h2>Supported Languages</h2>
+    <ul>
+        <li>HTML</li>
+        <li>XML</li>
+        <li>JSX/TSX (React)</li>
+        <li>Vue</li>
+        <li>PHP</li>
+    </ul>
+    ]]></description>
+
+    <!-- Product and plugin compatibility requirements -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+
+    <!-- Extension points defined by the plugin -->
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Services -->
+        <projectService
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigService"/>
+        
+        <!-- Auto-completion for Tailwind CSS classes -->
+        <completion.contributor
+                language="any"
+                implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor"/>
+                
+        <!-- Project startup activity -->
+        <postStartupActivity
+                implementation="com.github.dilika.tailwindsmartplugin.startup.TailwindStartupActivity"/>
+    </extensions>
+
+    <applicationListeners>
+        <!-- Project listener for detecting file changes -->
+        <listener class="com.github.dilika.tailwindsmartplugin.listeners.TailwindProjectListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    </applicationListeners>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+</idea-plugin>
