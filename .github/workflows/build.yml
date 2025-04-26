@@ -265,7 +265,7 @@ jobs:
         run: ./gradlew test
       
       - name: Run Qodana
-        uses: JetBrains/qodana-action@v2023.3
+        uses: JetBrains/qodana-action@v2025.1
         with:
           cache-default-branch-only: true
       
