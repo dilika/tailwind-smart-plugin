@@ -1,12 +1,9 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.dilika.tailwindsmartplugin</id>
-    <name>Tailwind CSS Support</name>
+    <name>Tailwind Smart Completion</name>
     <vendor>dilika</vendor>
     
-    <!-- Resource bundle for parser scripts -->
-    <resource-bundle>parser.tailwind-parser</resource-bundle>
-
     <description><![CDATA[
     <h1>Tailwind CSS Support</h1>
     <p>This plugin adds Tailwind CSS support to IntelliJ IDE.</p>
@@ -29,85 +26,23 @@
     </ul>
     ]]></description>
 
-    <!-- Product and plugin compatibility requirements.
-         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+    <!-- Product and plugin compatibility requirements -->
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
 
-    <!-- Extension points defined by the plugin.
-         Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
+    <!-- Extension points defined by the plugin -->
     <extensions defaultExtensionNs="com.intellij">
         <!-- Services -->
-        <projectService serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigService"/>
-        
-        <!-- Plugin startup activity -->
-        <postStartupActivity implementation="com.github.dilika.tailwindsmartplugin.startup.TailwindStartupActivity"/>
+        <applicationService
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigService"/>
         
         <!-- Auto-completion for Tailwind CSS classes -->
         <completion.contributor
-                language="HTML"
-                implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor"/>
-    
-        <completion.contributor
-                language="XML"
-                implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor"/>
-    
-        <!-- Add generic 'any' language support for broader coverage -->
-        <completion.contributor
                 language="any"
                 implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor"/>
-    
-        <!-- Rich documentation for Tailwind CSS classes -->
-        <lang.documentationProvider
-                language="HTML"
-                implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider"/>
-    
-        <lang.documentationProvider
-                language="XML"
-                implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider"/>
-    
-        <!-- Hover provider for backward compatibility -->
-        <lang.documentationProvider
-                language="HTML"
-                implementationClass="com.github.dilika.tailwindsmartplugin.hover.TailwindHoverProvider"/>
-    
-        <lang.documentationProvider
-                language="XML"
-                implementationClass="com.github.dilika.tailwindsmartplugin.hover.TailwindHoverProvider"/>
-    
-        <!-- Tool window for Tailwind CSS -->
-        <toolWindow id="TailwindCSS"
-                    anchor="right"
-                    factoryClass="com.github.dilika.tailwindsmartplugin.toolWindow.TailwindToolWindowFactory"/>
-    </extensions>
-<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
-<idea-plugin>
-    <id>com.github.dilika.tailwindsmartplugin</id>
-    <name>Tailwind Smart Completion</name>
-    <vendor>dilika</vendor>
-
-    <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.modules.lang</depends>
-
-    <extensions defaultExtensionNs="com.intellij">
-        <!-- Code completion for Tailwind CSS classes -->
-        <completion.contributor
-                language="any"
-                implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor"/>
-
-        <!-- Application service for global Tailwind config access -->
-        <applicationService
-                serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigService"/>
     </extensions>
 
     <actions>
         <!-- Add your actions here -->
     </actions>
-</idea-plugin>
-    <!-- Project listener to detect Tailwind configuration changes -->
-    <projectListeners>
-        <listener class="com.github.dilika.tailwindsmartplugin.listeners.TailwindProjectListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    </projectListeners>
-
 </idea-plugin>

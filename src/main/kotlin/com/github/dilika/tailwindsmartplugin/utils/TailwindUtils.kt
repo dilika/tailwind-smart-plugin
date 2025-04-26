@@ -1,5 +1,43 @@
 package com.github.dilika.tailwindsmartplugin.utils
+package com.github.dilika.tailwindsmartplugin.utils
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.github.dilika.tailwindsmartplugin.services.TailwindConfigService
+import org.json.JSONObject
+
+/**
+ * Utility class for Tailwind CSS related operations.
+ */
+object TailwindUtils {
+    private val logger = Logger.getInstance(TailwindUtils::class.java)
+    
+    /**
+     * Get all Tailwind CSS classes available for the project.
+     */
+    fun getTailwindClasses(project: Project): List<String> {
+        return try {
+            val projectPath = project.basePath ?: ""
+            TailwindConfigService.getInstance().getTailwindClasses(projectPath)
+        } catch (e: Exception) {
+            logger.error("Error getting Tailwind classes: ${e.message}")
+            emptyList()
+        }
+    }
+    
+    /**
+     * Get detailed data for all Tailwind CSS classes.
+     */
+    fun getTailwindClassData(project: Project): Map<String, JSONObject> {
+        return try {
+            val projectPath = project.basePath ?: ""
+            TailwindConfigService.getInstance().getTailwindClassData(projectPath)
+        } catch (e: Exception) {
+            logger.error("Error getting Tailwind class data: ${e.message}")
+            emptyMap()
+        }
+    }
+}
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import org.graalvm.polyglot.Context

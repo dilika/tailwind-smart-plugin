@@ -1,5 +1,71 @@
 package com.github.dilika.tailwindsmartplugin.services
+package com.github.dilika.tailwindsmartplugin.services
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.Logger
+import org.json.JSONObject
+import java.io.File
+
+/**
+ * Application-level service for managing Tailwind CSS configuration.
+ * This service provides access to Tailwind configuration across the IDE.
+ */
+@Service
+class TailwindConfigService {
+    private val logger = Logger.getInstance(TailwindConfigService::class.java)
+    
+    // Cache for Tailwind configuration data
+    private val configCache = mutableMapOf<String, JSONObject>()
+    
+    // Default Tailwind classes for when config parsing fails
+    private val defaultClasses = listOf(
+        "bg-blue-500", "text-white", "p-4", "m-2", "flex", "items-center", "justify-between", 
+        "rounded", "shadow", "hover:bg-blue-600", "font-bold", "text-lg"
+    )
+    
+    /**
+     * Get all Tailwind classes for the given project path
+     */
+    fun getTailwindClasses(projectPath: String): List<String> {
+        return try {
+            // In a real implementation, this would parse the Tailwind configuration
+            // and extract all available classes
+            logger.info("Getting Tailwind classes for project: $projectPath")
+            defaultClasses
+        } catch (e: Exception) {
+            logger.error("Error getting Tailwind classes: ${e.message}")
+            defaultClasses
+        }
+    }
+    
+    /**
+     * Get detailed Tailwind class data for the given project path
+     */
+    fun getTailwindClassData(projectPath: String): Map<String, JSONObject> {
+        return try {
+            // In a real implementation, this would parse the Tailwind configuration
+            // and extract detailed data for each class
+            logger.info("Getting Tailwind class data for project: $projectPath")
+            defaultClasses.associateWith { className ->
+                JSONObject().apply {
+                    put("type", "utility")
+                    put("description", "Tailwind utility class")
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("Error getting Tailwind class data: ${e.message}")
+            emptyMap()
+        }
+    }
+    
+    companion object {
+        @JvmStatic
+        fun getInstance(): TailwindConfigService {
+            return ApplicationManager.getApplication().getService(TailwindConfigService::class.java)
+        }
+    }
+}
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
