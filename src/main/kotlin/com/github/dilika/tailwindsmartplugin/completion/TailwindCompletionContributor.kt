@@ -1,28 +1,5 @@
 package com.github.dilika.tailwindsmartplugin.completion
-package com.github.dilika.tailwindsmartplugin.completion
 
-import com.intellij.codeInsight.completion.CompletionContributor
-import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.patterns.PlatformPatterns
-import com.intellij.patterns.XmlPatterns
-import com.intellij.psi.PsiElement
-
-/**
- * CompletionContributor for Tailwind CSS classes.
- * This class registers the TailwindCompletionProvider to provide completion
- * suggestions for Tailwind CSS classes in appropriate contexts.
- */
-class TailwindCompletionContributor : CompletionContributor() {
-    
-    init {
-        // Register the completion provider for any element to ensure it works in various file types
-        extend(
-            CompletionType.BASIC,
-            PlatformPatterns.psiElement(PsiElement::class.java),
-            TailwindCompletionProvider()
-        )
-    }
-}
 import com.intellij.codeInsight.completion.*
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.XmlPatterns
@@ -31,6 +8,11 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.PsiElement
 import com.intellij.openapi.diagnostic.Logger
 
+/**
+ * CompletionContributor for Tailwind CSS classes.
+ * This class registers the TailwindCompletionProvider to provide completion
+ * suggestions for Tailwind CSS classes in appropriate contexts.
+ */
 class TailwindCompletionContributor : CompletionContributor() {
     private val logger = Logger.getInstance(TailwindCompletionContributor::class.java)
 
