@@ -3,6 +3,9 @@
     <id>com.github.dilika.tailwindsmartplugin</id>
     <name>Tailwind CSS Support</name>
     <vendor>dilika</vendor>
+    
+    <!-- Resource bundle for parser scripts -->
+    <resource-bundle>parser.tailwind-parser</resource-bundle>
 
     <description><![CDATA[
     <h1>Tailwind CSS Support</h1>
@@ -30,38 +33,48 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
-    <depends>com.intellij.modules.xml</depends>
 
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
+        <!-- Services -->
+        <projectService serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigService"/>
+        
+        <!-- Plugin startup activity -->
+        <postStartupActivity implementation="com.github.dilika.tailwindsmartplugin.startup.TailwindStartupActivity"/>
+        
         <!-- Auto-completion for Tailwind CSS classes -->
         <completion.contributor
                 language="HTML"
                 implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor"/>
-
+    
         <completion.contributor
                 language="XML"
                 implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor"/>
-
+    
+        <!-- Add generic 'any' language support for broader coverage -->
+        <completion.contributor
+                language="any"
+                implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor"/>
+    
         <!-- Rich documentation for Tailwind CSS classes -->
         <lang.documentationProvider
                 language="HTML"
                 implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider"/>
-
+    
         <lang.documentationProvider
                 language="XML"
                 implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider"/>
-
+    
         <!-- Hover provider for backward compatibility -->
         <lang.documentationProvider
                 language="HTML"
                 implementationClass="com.github.dilika.tailwindsmartplugin.hover.TailwindHoverProvider"/>
-
+    
         <lang.documentationProvider
                 language="XML"
                 implementationClass="com.github.dilika.tailwindsmartplugin.hover.TailwindHoverProvider"/>
-
+    
         <!-- Tool window for Tailwind CSS -->
         <toolWindow id="TailwindCSS"
                     anchor="right"

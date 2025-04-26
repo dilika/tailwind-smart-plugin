@@ -33,12 +33,13 @@ class TailwindCompletionContributor : CompletionContributor() {
         logger.info("[Tailwind] JSX/TSX class pattern registered")
 
         // Pattern for any string literal that might contain Tailwind classes
+        val classPattern = StandardPatterns.string().contains("class")
+        val classNamePattern = StandardPatterns.string().contains("className")
+        
         val stringLiteralPattern = PlatformPatterns.psiElement()
             .inside(
                 PlatformPatterns.psiElement().withText(
-                    StandardPatterns.string().contains("class").or(
-                        StandardPatterns.string().contains("className")
-                    )
+                    PlatformPatterns.or(classPattern, classNamePattern)
                 )
             )
 
