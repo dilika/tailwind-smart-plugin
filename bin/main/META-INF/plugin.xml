@@ -4,6 +4,9 @@
     <name>Tailwind CSS Support</name>
     <vendor>dilika</vendor>
     
+    <!-- Compatibility with IntelliJ Platform Products -->
+    <idea-version since-build="233" until-build="242.*"/>
+    
     <description><![CDATA[
     <h1>Tailwind CSS Support</h1>
     <p>This plugin adds Tailwind CSS support to IntelliJ IDE.</p>
