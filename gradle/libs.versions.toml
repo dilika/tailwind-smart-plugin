@@ -13,7 +13,7 @@ kover = "0.7.5"
 qodana = "2023.3.1"
 
 # GraalVM dependencies
-graalvm-sdk = "23.0.1"
+graalvm-sdk = "24.2.1"
 graalvm-js = "23.0.1"
 graalvm-js-scriptengine = "23.0.1"
 
