@@ -4,8 +4,6 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.XmlPatterns
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.xml.XmlAttributeValue
-import com.intellij.psi.PsiElement
 import com.intellij.openapi.diagnostic.Logger
 
 /**
@@ -22,41 +20,25 @@ class TailwindCompletionContributor : CompletionContributor() {
         // Pattern for targeting HTML/XML class attributes
         val classAttributePattern = XmlPatterns.xmlAttributeValue()
             .withParent(
-                XmlPatterns.xmlAttribute().withName(
+                XmlPatterns.xmlAttributeValue().withName(
                     StandardPatterns.string().oneOf("class", "className")
                 )
             )
 
         logger.info("[Tailwind] HTML/XML class attribute pattern registered")
 
-        // More specific pattern for JSX/TSX files
-        val jsxClassPattern = PlatformPatterns.psiElement()
-            .inside(PlatformPatterns.psiElement().withText(
-                StandardPatterns.string().contains("className=")
-            ))
+        // Generic pattern for all PSI (to use for files JSX/TSX)
+        val genericPattern = PlatformPatterns.psiElement()
 
-        logger.info("[Tailwind] JSX/TSX class pattern registered")
+        logger.info("Generic patterns saved")
 
-        // Pattern for any string literal that might contain Tailwind classes
-        val classPattern = StandardPatterns.string().contains("class")
-        val classNamePattern = StandardPatterns.string().contains("className")
-        
-        val stringLiteralPattern = PlatformPatterns.psiElement()
-            .inside(
-                PlatformPatterns.psiElement().withText(
-                    PlatformPatterns.or(classPattern, classNamePattern)
-                )
-            )
-
-        logger.info("[Tailwind] Generic string literal pattern registered")
-
-        // Register completion provider for class attributes in all contexts
+        // Register completion provider only for all class attributes for all contextes
         extend(
             CompletionType.BASIC,
-            PlatformPatterns.or(classAttributePattern, jsxClassPattern, stringLiteralPattern),
+            PlatformPatterns.or(classAttributePattern, genericPattern),
             TailwindCompletionProvider()
         )
 
-        logger.info("[Tailwind] Tailwind completion provider registered for all contexts")
+        logger.info("[Tailwind] Tailwind completion provider registered for class attributes")
     }
 }

@@ -1,18 +1,8 @@
-import org.jetbrains.changelog.Changelog
-import org.jetbrains.changelog.markdownToHTML
-import org.gradle.api.DefaultTask
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.options.Option
-
 plugins {
-    id("java") // Java support
-    alias(libs.plugins.kotlin) // Kotlin support
-    alias(libs.plugins.intellij) // IntelliJ Plugin
-    alias(libs.plugins.changelog) // Changelog Plugin
-    alias(libs.plugins.qodana) // Qodana Plugin
-    alias(libs.plugins.kover) // Kover Plugin
+    id("java")
+    id("org.jetbrains.kotlin.jvm") version "1.9.22"
+    id("org.jetbrains.intellij") version "1.17.0"
+    id("org.jetbrains.changelog") version "2.0.0"
 }
 
 group = project.property("pluginGroup").toString()
@@ -42,9 +32,9 @@ dependencies {
 intellij {
     version.set(project.property("platformVersion").toString())
     type.set(project.property("platformType").toString())
-
+    updateSinceUntilBuild.set(true)
+    
     // Only include bundled plugins from the platformBundledPlugins property
-    // NOTE: We're not automatically including platform plugins to avoid the version issues
     val bundledPlugins = project.property("platformBundledPlugins").toString()
     
     if (bundledPlugins.isNotEmpty()) {
@@ -52,8 +42,6 @@ intellij {
     } else {
         plugins.set(emptyList())
     }
-    
-    sandboxDir.set(project.layout.buildDirectory.dir("idea-sandbox").get().asFile.absolutePath)
 }
 
 // Configure Gradle tasks

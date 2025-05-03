@@ -5,7 +5,7 @@
     <vendor>dilika</vendor>
     
     <!-- Compatibility with IntelliJ Platform Products -->
-    <idea-version since-build="233" until-build="242.*"/>
+    <idea-version since-build="233" until-build="251.*"/>
     
     <description><![CDATA[
     <h1>Tailwind CSS Support</h1>
