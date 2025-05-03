@@ -91,8 +91,8 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
 
         // Always propose all tailwind classes, without filter by prefix
         classes.forEach { className ->
-            val element = LookupElementBuilder.create(className)
-            resultSet.addElement(LookupElementBuilder.create(className))
+            val element = creatLookupElement(className, tailwindData)
+            resultSet.addElement(element)
         }
         return
     }

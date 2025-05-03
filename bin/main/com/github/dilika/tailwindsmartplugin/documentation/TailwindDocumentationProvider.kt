@@ -69,22 +69,79 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
             // Get enriched class data if possible
             val classDataMap = TailwindUtils.getTailwindClassData(project)
             val classData = classDataMap[className]
-            val description = classData?.optJSONObject("documentation")?.optString("description") 
-                ?: "Tailwind CSS class"
+            val docJSON = classData?.optJSONObject("documentation") ?: return "<html><body>No documentation available</body></html>"
+            
+            val description = docJSON.optString("description", "Tailwind CSS class")
+            val category = docJSON.optString("type", "utility")
+            val icon = docJSON.optString("icon", "🔧")
+            
+            // Build color preview if available
+            val colorHtml = if (docJSON.has("color")) {
+                val color = docJSON.getString("color")
+                val colorStyle = when {
+                    className.startsWith("bg-") -> "background-color: $color;"
+                    className.startsWith("text-") -> "color: $color;"
+                    className.startsWith("border-") -> "border: 2px solid $color;"
+                    else -> "background-color: $color;"
+                }
                 
-            val examples = classData?.optJSONObject("documentation")?.optJSONArray("examples")
-            val exampleHtml = if (examples != null && examples.length() > 0) {
-                "<br/><b>Example:</b> <code>${examples.getString(0)}</code>"
-            } else {
-                ""
-            }
+                """
+                <div style="display: inline-block; width: 20px; height: 20px; ${colorStyle} border-radius: 3px; margin-right: 5px; vertical-align: middle;"></div>
+                <span><code>$color</code></span><br/>
+                """
+            } else ""
+            
+            // Get CSS property if available
+            val cssPropertyHtml = if (docJSON.has("cssProperty")) {
+                val cssProperty = docJSON.getString("cssProperty")
+                "<br/><span><b>CSS Property:</b> <code>$cssProperty</code></span>"
+            } else ""
+            
+            // Get state information if available
+            val stateHtml = if (docJSON.has("state")) {
+                val state = docJSON.getString("state")
+                val baseClass = docJSON.optString("baseClass", "")
+                val stateDescription = docJSON.optString("stateDescription", "")
+                
+                """
+                <div><b>State:</b> <code>$state</code></div>
+                <div><b>Applied to:</b> <code>$baseClass</code></div>
+                <div><i>$stateDescription</i></div>
+                """
+            } else ""
+            
+            // Build examples section
+            val examples = docJSON.optJSONArray("examples")
+            val examplesHtml = if (examples != null && examples.length() > 0) {
+                val exampleBuilder = StringBuilder()
+                exampleBuilder.append("<br/><b>Examples:</b><br/>")
+                
+                for (i in 0 until examples.length()) {
+                    exampleBuilder.append("<code>${examples.getString(i)}</code>")
+                    if (i < examples.length() - 1) {
+                        exampleBuilder.append("<br/>")
+                    }
+                }
+                
+                exampleBuilder.toString()
+            } else ""
             
             return """
                 <html>
                     <body>
-                        <div><b>$className</b></div>
-                        <div><i>$description</i></div>
-                        $exampleHtml
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <span style="font-size: 16px; margin-right: 8px;">$icon</span>
+                            <span style="font-size: 16px; font-weight: bold;">$className</span>
+                        </div>
+                        <div style="margin-bottom: 10px; color: #666;">
+                            <span><i>$description</i></span>
+                            <br/>
+                            <span><b>Category:</b> $category</span>
+                        </div>
+                        $colorHtml
+                        $cssPropertyHtml
+                        $stateHtml
+                        $examplesHtml
                     </body>
                 </html>
             """.trimIndent()
