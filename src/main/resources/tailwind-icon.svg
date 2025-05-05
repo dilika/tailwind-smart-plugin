@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Simple vector icon for Tailwind Smart Plugin -->
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" aria-labelledby="title">
+  <title>Tailwind Smart Plugin Icon</title>
+  <!-- Background rounded rectangle using Tailwind primary cyan (#38bdf8) -->
+  <rect width="512" height="512" rx="96" fill="#38bdf8"/>
+  <!-- White swirl representing Tailwind logo-like wave -->
+  <path d="M153 232c29-52 77-79 132-73 38 4 66 25 86 61 6 12 13 25 21 38-29 52-77 79-132 73-38-4-66-25-86-61-6-12-13-25-21-38z" fill="#ffffff"/>
+  <!-- Second wave -->
+  <path d="M120 328c24-43 63-65 108-60 31 3 54 20 70 49 5 9 10 19 17 29-24 43-63 65-108 60-31-3-54-20-70-49-5-9-10-19-17-29z" fill="#ffffff" opacity="0.9"/>
+  <!-- Optional initials -->
+  <text x="256" y="468" font-family="Helvetica, Arial, sans-serif" font-size="96" font-weight="bold" text-anchor="middle" fill="#ffffff" opacity="0.9">TW</text>
+</svg>

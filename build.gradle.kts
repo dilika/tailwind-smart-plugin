@@ -64,10 +64,11 @@ tasks {
 
         // Change notes
         changeNotes.set("""
-            <h2>0.0.1</h2>
+            <h2>0.0.2</h2>
             <ul>
-              <li>Initial release</li>
-              <li>Basic Tailwind CSS class completion</li>
+              <li>Extensive support for Tailwind v1–v4 utilities</li>
+              <li>Color-coded icons & improved autocompletion visuals</li>
+              <li>Donation link added to plugin overview</li>
             </ul>
         """.trimIndent())
     }

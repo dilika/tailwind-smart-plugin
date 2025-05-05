@@ -1,6 +1,7 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.dilika.tailwindsmartplugin</id>
+    <icon>pluginIcon.svg</icon>
     <name>Tailwind CSS Support</name>
     <vendor>dilika</vendor>
     
