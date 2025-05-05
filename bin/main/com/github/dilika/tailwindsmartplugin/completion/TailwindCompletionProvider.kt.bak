@@ -526,6 +526,7 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
             context.commitDocument()
         }
     }
+    }
 
     /**
      * Vérification optimisée pour détecter si nous sommes dans un attribut de classe

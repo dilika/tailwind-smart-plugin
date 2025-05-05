@@ -26,22 +26,48 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
 
     // Liste de classes Tailwind v4 pour l'auto-complétion
     private val tailwindV4Classes = listOf(
+        // Couleurs et fonds
         "bg-primary", "text-primary", "border-primary",
         "bg-secondary", "text-secondary", "border-secondary",
+        "bg-clip-text", "text-transparent",
+        
+        // Gradients
+        "bg-gradient-to-r", "bg-gradient-to-l", "bg-gradient-to-t", "bg-gradient-to-b",
+        "bg-gradient-to-tr", "bg-gradient-to-tl", "bg-gradient-to-br", "bg-gradient-to-bl",
+        "from-primary", "from-secondary", "to-primary", "to-primary-dark", "to-secondary",
+        
+        // Espacement
         "p-1", "p-2", "p-3", "p-4",
         "m-1", "m-2", "m-3", "m-4",
+        
+        // Typographie
         "text-xs", "text-sm", "text-base", "text-lg", "text-xl",
+        
+        // Bordures et arrondis
         "rounded-sm", "rounded", "rounded-md", "rounded-lg",
+        
+        // Effets
         "shadow-xs", "shadow-sm", "shadow", "shadow-md", "shadow-lg",
+        
+        // Flexbox et grilles
         "flex", "flex-row", "flex-col", "flex-wrap", "flex-nowrap",
         "grid", "grid-cols-1", "grid-cols-2", "grid-cols-3",
-        "animate-bounce", "animate-pulse", "animate-spin"
+        
+        // Animations et transitions
+        "animate-bounce", "animate-pulse", "animate-spin",
+        "transition", "transition-colors", "transition-opacity", "transition-shadow",
+        "duration-100", "duration-200", "duration-300",
+        
+        // Pseudo-classes
+        "hover:text-primary", "hover:bg-primary", "hover:border-primary",
+        "focus:text-primary", "focus:bg-primary", "focus:border-primary"
     )
 
     // Catégories pour une meilleure organisation
     private val categoryMapping = mapOf(
         // Couleurs et arrière-plans
         "bg-" to "Background",
+        "bg-clip-" to "Background",
         "from-" to "Gradient",
         "to-" to "Gradient",
         "via-" to "Gradient",
@@ -162,6 +188,343 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
             }
             resultSet.addElement(element)
         }
+        
+        // Suggérer des groupes de classes couramment utilisés ensemble pour le formatage intelligent
+        suggestClassGroups(parameters, resultSet, tailwindData)
+    }
+    
+    /**
+     * Suggère des groupes de classes Tailwind couramment utilisés ensemble
+     * pour améliorer la productivité et la lisibilité du code
+     */
+    private fun suggestClassGroups(parameters: CompletionParameters, resultSet: CompletionResultSet, tailwindData: Map<String, JSONObject>) {
+        // Obtenir le texte de l'élément actuel pour analyse contextuelle
+        val elementText = parameters.position.text
+        
+        // Vérifier si nous sommes dans un contexte React/JSX ou HTML
+        val isReact = try {
+            val file = parameters.originalFile
+            val extension = file.name.substringAfterLast('.', "")
+            val fileType = file.fileType.name.lowercase()
+            extension == "jsx" || extension == "tsx" || extension == "js" || extension == "ts" ||
+                    fileType.contains("jsx") || fileType.contains("tsx") || 
+                    fileType.contains("javascript") || fileType.contains("typescript")
+        } catch (e: Exception) {
+            false
+        }
+        
+        // Groupes de classes couramment utilisés ensemble, organisés par fonction
+        val commonClassGroups = mapOf(
+            // Dégradés avec texte transparent
+            "gradient-text" to "bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-dark",
+            "gradient-text-blue" to "bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600",
+            "gradient-text-green" to "bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-600",
+            "gradient-text-purple" to "bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600",
+            
+            // Boutons stylisés
+            "btn-primary" to "bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded transition-colors",
+            "btn-outline" to "border border-primary text-primary hover:bg-primary hover:text-white rounded py-2 px-4 transition-colors",
+            "btn-secondary" to "bg-secondary hover:bg-secondary-dark text-white font-medium py-2 px-4 rounded transition-colors",
+            "btn-blue" to "bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded transition-colors",
+            "btn-red" to "bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded transition-colors",
+            "btn-green" to "bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded transition-colors",
+            "btn-gray" to "bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded transition-colors",
+            "btn-sm" to "py-1 px-3 text-sm rounded font-medium transition-colors",
+            "btn-lg" to "py-3 px-6 text-lg rounded font-medium transition-colors",
+            
+            // Cartes et conteneurs
+            "card" to "bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow",
+            "card-hover" to "bg-white rounded-lg shadow-md p-6 hover:shadow-lg hover:border-primary/20 border border-transparent transition-all",
+            "card-dark" to "bg-gray-800 rounded-lg shadow-md p-6 text-white",
+            "container-section" to "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12",
+            "container-narrow" to "max-w-3xl mx-auto px-4 py-8",
+            "container-wide" to "max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8",
+            
+            // Layout responsif
+            "responsive-grid" to "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6",
+            "responsive-cols-2" to "grid grid-cols-1 md:grid-cols-2 gap-6",
+            "responsive-cols-3" to "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6",
+            
+            // Flexbox layouts
+            "flex-center" to "flex items-center justify-center",
+            "flex-between" to "flex items-center justify-between",
+            "flex-col-center" to "flex flex-col items-center justify-center",
+            "flex-wrap" to "flex flex-wrap",
+            "flex-col-start" to "flex flex-col items-start",
+            "flex-col-end" to "flex flex-col items-end",
+            
+            // Espacement et typographie
+            "prose" to "text-gray-700 leading-relaxed space-y-6",
+            "heading-1" to "text-4xl font-bold text-gray-900 mb-6",
+            "heading-2" to "text-3xl font-bold text-gray-900 mb-4",
+            "heading-3" to "text-2xl font-bold text-gray-900 mb-4",
+            "heading-4" to "text-xl font-bold text-gray-900 mb-3",
+            "paragraph" to "text-gray-700 leading-relaxed mb-4",
+            
+            // Éléments forms
+            "input" to "block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary",
+            "select" to "block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary",
+            "checkbox" to "rounded border-gray-300 text-primary focus:ring-primary",
+            "label" to "block text-sm font-medium text-gray-700 mb-1",
+            
+            // Éléments interactifs
+            "badge" to "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary",
+            "badge-gray" to "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800",
+            "badge-green" to "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800",
+            "badge-red" to "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800",
+            
+            // Effets et animations
+            "hover-scale" to "transform transition hover:scale-105",
+            "hover-lift" to "transform transition hover:-translate-y-1 hover:shadow-lg",
+            "animate-fade-in" to "animate-fade-in duration-300",
+            "animate-slide-in" to "animate-slide-in duration-300",
+            
+            // Navigation
+            "nav-link" to "text-gray-700 hover:text-primary transition-colors font-medium",
+            "nav-link-active" to "text-primary font-medium",
+            "nav-item" to "mx-4 py-2",
+            
+            // Tables
+            "table-row" to "bg-white border-b hover:bg-gray-50",
+            "table-cell" to "px-6 py-4 whitespace-nowrap text-sm text-gray-900",
+            "table-header" to "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+        )
+        
+        // Créer et ajouter des éléments de complétion pour les groupes de classes
+        commonClassGroups.forEach { (groupName, classGroup) ->
+            // Créer une icône spécifique pour les groupes de classes
+            val groupIcon = object : Icon {
+                override fun paintIcon(c: java.awt.Component, g: java.awt.Graphics, x: Int, y: Int) {
+                    val g2d = g.create() as java.awt.Graphics2D
+                    g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON)
+                    
+                    // Fond dégradé pour les groupes
+                    val gradientPaint = java.awt.GradientPaint(
+                        x.toFloat(), y.toFloat(), java.awt.Color(0x8B5CF6), // Violet
+                        (x + 16).toFloat(), (y + 16).toFloat(), java.awt.Color(0xEC4899) // Rose
+                    )
+                    g2d.paint = gradientPaint
+                    g2d.fillRoundRect(x, y, 16, 16, 4, 4) // carré arrondi avec dégradé
+                    
+                    // Symbole de groupe (G)
+                    g2d.color = java.awt.Color.WHITE
+                    g2d.font = java.awt.Font("Dialog", java.awt.Font.BOLD, 10)
+                    g2d.drawString("G", x + 5, y + 12)
+                    
+                    g2d.dispose()
+                }
+                
+                override fun getIconWidth(): Int = 16
+                override fun getIconHeight(): Int = 16
+            }
+            
+            // Créer l'élément de complétion pour le groupe de classes
+            val element = LookupElementBuilder.create(classGroup)
+                .withPresentableText(groupName) // Affiche le nom du groupe comme texte principal
+                .withTypeText("Class Group", true)
+                .withTailText(" $classGroup", true) // Affiche les classes du groupe
+                .withIcon(groupIcon)
+                .withBoldness(true)
+                .withInsertHandler { context, _ ->
+                    // Formater les classes Tailwind après insertion avec attribut HTML/JSX
+                    formatTailwindClasses(context, classGroup)
+                }
+                
+            resultSet.addElement(PrioritizedLookupElement.withPriority(element, 1000.0)) // Priorité élevée pour apparaître en haut
+        }
+    }
+    
+    /**
+     * Formate intelligemment les classes Tailwind après insertion
+     * pour améliorer la lisibilité du code
+     */
+    /**
+     * Formate intelligemment les classes Tailwind après insertion
+     * pour améliorer la lisibilité du code
+     */
+    private fun formatTailwindClasses(context: InsertionContext, classes: String) {
+        val editor = context.editor
+        val document = editor.document
+        
+        // Vérifier si nous sommes déjà dans un attribut class/className
+        val isAlreadyInAttribute = try {
+            val textBeforeOffset = maxOf(0, context.startOffset - 50) // Vérifier les 50 caractères précédents
+            val textBefore = document.getText(com.intellij.openapi.util.TextRange(textBeforeOffset, context.startOffset))
+            textBefore.contains("className=") || textBefore.contains("class=")
+        } catch (e: Exception) {
+            false
+        }
+        
+        // Analyser les classes pour les organiser par catégories
+        val classArray = classes.split(" ")
+        
+        // Déterminer si nous sommes dans un attribut JSX/React (className) ou HTML (class)
+        val isReactContext = isReactContext(context)
+        
+        // Définir l'ordre des catégories pour un formatage cohérent
+        val categoryOrder = listOf(
+            "Layout", "Position", "Display", "Flexbox", "Grid", "Spacing", "Sizing",
+            "Typography", "Background", "Gradient", "Borders", "Effects", "Animation"
+        )
+        
+        // Organiser les classes par catégories
+        val categorizedClasses = mutableMapOf<String, MutableList<String>>().apply {
+            classArray.forEach { className ->
+                val category = getCategoryForClass(className)
+                getOrPut(category) { mutableListOf() }.add(className)
+            }
+        }
+        
+        // Trier les catégories selon l'ordre défini
+        val sortedCategories = categorizedClasses.keys.sortedBy { category ->
+            categoryOrder.indexOf(category).let { if (it == -1) categoryOrder.size else it }
+        }
+        
+        // Supprimer les classes insérées pour les remplacer par la version formatée
+        val startOffset = context.startOffset
+        val endOffset = context.tailOffset
+        document.deleteString(startOffset, endOffset)
+        
+        // Déterminer si on doit formater sur plusieurs lignes
+        val useMultilineFormat = classArray.size > 3
+        
+        // Construire les classes formatées
+        val formattedClasses = if (useMultilineFormat) {
+            buildString {
+                // Début de l'attribut className ou class (seulement si pas déjà dans un attribut)
+                if (!isAlreadyInAttribute) {
+                    if (isReactContext) {
+                        append("className=\"")
+                    } else {
+                        append("class=\"")
+                    }
+                }
+                
+                sortedCategories.forEachIndexed { index, category ->
+                    if (index > 0) append("\n    ")
+                    else append("\n    ") // Première ligne avec indentation
+                    
+                    // Ajouter les classes de la catégorie
+                    append(categorizedClasses[category]?.joinToString(" ") ?: "")
+                }
+                
+                // Fermeture des guillemets (seulement si pas déjà dans un attribut)
+                if (!isAlreadyInAttribute) {
+                    append("\n  \"") // Fermeture des guillemets avec indentation correcte
+                } else {
+                    append("\n  ") // Juste un retour à la ligne si déjà dans un attribut
+                }
+            }
+        } else {
+            // Format simple sur une seule ligne
+            buildString {
+                // Début de l'attribut (seulement si pas déjà dans un attribut)
+                if (!isAlreadyInAttribute) {
+                    if (isReactContext) {
+                        append("className=\"")
+                    } else {
+                        append("class=\"")
+                    }
+                }
+                
+                // Ajouter toutes les classes dans l'ordre des catégories
+                sortedCategories.forEachIndexed { index, category ->
+                    if (index > 0) append(" ")
+                    append(categorizedClasses[category]?.joinToString(" ") ?: "")
+                }
+                
+                // Fermeture des guillemets (seulement si pas déjà dans un attribut)
+                if (!isAlreadyInAttribute) {
+                    append("\"") // Fermeture des guillemets
+                }
+            }
+        }
+        
+        // Insérer les classes formatées
+        document.insertString(startOffset, formattedClasses)
+        
+        // Mettre à jour les offsets d'édition
+        context.commitDocument()
+    }
+    
+    /**
+     * Détermine si nous sommes dans un contexte React/JSX ou HTML classique
+     * pour choisir entre className et class
+     */
+    /**
+     * Détermine si nous sommes dans un contexte React/JSX ou HTML classique
+     * pour choisir entre className et class
+     */
+    private fun isReactContext(context: InsertionContext): Boolean {
+        val file = context.file
+        val fileType = file.fileType.name.lowercase()
+        
+        // Vérification basée sur le type de fichier
+        val isJsxFile = fileType.contains("jsx") || fileType.contains("tsx") || 
+                        fileType.contains("javascript") || fileType.contains("typescript")
+        
+        // Vérification supplémentaire basée sur l'extension du fichier
+        val extension = file.name.substringAfterLast('.', "")
+        val isReactExtension = extension == "jsx" || extension == "tsx" || extension == "js" || extension == "ts"
+        
+        // Vérification du contexte autour du curseur
+        val isInsideReactComponent = try {
+            val startOffset = maxOf(0, context.startOffset - 100) // Vérifier les 100 caractères précédents
+            val textBefore = context.document.getText(com.intellij.openapi.util.TextRange(startOffset, context.startOffset))
+            textBefore.contains("className") || textBefore.contains("React") || 
+            textBefore.contains("import React") || textBefore.contains("function Component")
+        } catch (e: Exception) {
+            false
+        }
+        
+        return isJsxFile || isReactExtension || isInsideReactComponent
+    }
+    
+    /**
+     * Vérifie si nous devons envelopper la classe dans un attribut class ou className
+     * et effectue l'enveloppement si nécessaire
+     */
+    private fun wrapWithAttributeIfNeeded(context: InsertionContext, className: String) {
+        val document = context.document
+        val editor = context.editor
+        val startOffset = context.startOffset
+        val tailOffset = context.tailOffset
+        
+        // Vérifier si nous sommes déjà dans un attribut class/className
+        val isAlreadyInAttribute = try {
+            val textBeforeOffset = maxOf(0, startOffset - 50) // Vérifier les 50 caractères précédents
+            val textBefore = document.getText(com.intellij.openapi.util.TextRange(textBeforeOffset, startOffset))
+            val isInClassName = textBefore.contains("className=") || textBefore.contains("className=\"")
+            val isInClass = textBefore.contains("class=") || textBefore.contains("class=\"")
+            isInClassName || isInClass
+        } catch (e: Exception) {
+            false
+        }
+        
+        // Si nous ne sommes pas déjà dans un attribut, wrappons la classe
+        if (!isAlreadyInAttribute) {
+            // Déterminer si c'est un contexte React ou HTML
+            val isReact = isReactContext(context)
+            
+            // Supprimer la classe insérée pour la remplacer par une version formatée
+            document.deleteString(startOffset, tailOffset)
+            
+            // Construire l'attribut avec la classe
+            val formattedAttribute = if (isReact) {
+                "className=\"$className\""
+            } else {
+                "class=\"$className\""
+            }
+            
+            // Insérer l'attribut formaté
+            document.insertString(startOffset, formattedAttribute)
+            
+            // Positionner le curseur après les guillemets fermantes
+            editor.caretModel.moveToOffset(startOffset + formattedAttribute.length)
+            
+            // Mettre à jour les offsets d'édition
+            context.commitDocument()
+        }
     }
 
     /**
@@ -202,6 +565,10 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
                 .withTailText(" ${getDescriptionForClass(className, tailwindData)}", true)
                 .withBoldness(true)
                 .withCaseSensitivity(false)
+                .withInsertHandler { context, _ ->
+                    // Formater avec class="..." ou className="..." pour chaque classe insérée
+                    wrapWithAttributeIfNeeded(context, className)
+                }
         } ?: createNewLookupElement(className, tailwindData)
     }
 
@@ -323,6 +690,29 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
             className.startsWith("ease-") -> Pair("Animation", JBColor(0xF43F5E, 0xF43F5E)) // Rose vif
             className.startsWith("delay-") -> Pair("Animation", JBColor(0xF43F5E, 0xF43F5E)) // Rose vif
             
+            // === PSEUDO-CLASSES (HOVER, FOCUS, ETC.) ===
+            className.startsWith("hover:") -> {
+                // Extraire la partie après le 'hover:'
+                val baseClass = className.substring(6)
+                val (baseType, baseColor) = when {
+                    baseClass.startsWith("text-") -> Pair("Typography", JBColor(0xEF4444, 0xEF4444))
+                    baseClass.startsWith("bg-") -> Pair("Background", JBColor(0x3B82F6, 0x3B82F6))
+                    baseClass.startsWith("border-") -> Pair("Borders", JBColor(0x6B7280, 0x6B7280))
+                    else -> Pair("Other", JBColor(0x94A3B8, 0x94A3B8))
+                }
+                Pair("Hover:${baseType}", baseColor)
+            }
+            className.startsWith("focus:") -> {
+                val baseClass = className.substring(6)
+                val (baseType, baseColor) = when {
+                    baseClass.startsWith("text-") -> Pair("Typography", JBColor(0xEF4444, 0xEF4444))
+                    baseClass.startsWith("bg-") -> Pair("Background", JBColor(0x3B82F6, 0x3B82F6))
+                    baseClass.startsWith("border-") -> Pair("Borders", JBColor(0x6B7280, 0x6B7280))
+                    else -> Pair("Other", JBColor(0x94A3B8, 0x94A3B8))
+                }
+                Pair("Focus:${baseType}", baseColor)
+            }
+            
             // === TRANSFORM ===
             className == "transform" -> Pair("Transform", JBColor(0x0EA5E9, 0x0EA5E9)) // Bleu ciel
             className.startsWith("scale-") -> Pair("Transform", JBColor(0x0EA5E9, 0x0EA5E9)) // Bleu ciel
@@ -362,6 +752,10 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
             .withTailText(" $description", true)
             .withBoldness(true)
             .withCaseSensitivity(false)
+            .withInsertHandler { context, _ ->
+                // Formater avec class="..." ou className="..." pour chaque classe insérée
+                wrapWithAttributeIfNeeded(context, className)
+            }
     }
 
     /**
@@ -673,7 +1067,9 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
             "slate", "gray", "zinc", "neutral", "stone", "red", "orange", "amber", 
             "yellow", "lime", "green", "emerald", "teal", "cyan", "sky", "blue", 
             "indigo", "violet", "purple", "fuchsia", "pink", "rose",
-            "white", "black", "transparent", "current"
+            "white", "black", "transparent", "current",
+            // Ajout des couleurs custom
+            "primary", "primary-dark", "secondary", "secondary-dark"
         )
         
         return tailwindColors.contains(name)

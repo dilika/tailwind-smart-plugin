@@ -54,12 +54,33 @@
         <!-- Project startup activity -->
         <postStartupActivity
                 implementation="com.github.dilika.tailwindsmartplugin.startup.TailwindStartupActivity"/>
+                
+        <!-- Folding pour les attributs Tailwind CSS class/className -->
+        <lang.foldingBuilder 
+                language="XML"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="JavaScript"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="TypeScript"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="HTML"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="Vue"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
     </extensions>
 
     <applicationListeners>
         <!-- Project listener for detecting file changes -->
         <listener class="com.github.dilika.tailwindsmartplugin.listeners.TailwindProjectListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
+                  
+        <!-- Editor listener for automatic folding of Tailwind classes -->
+        <listener class="com.github.dilika.tailwindsmartplugin.listeners.TailwindEditorListener"
+                  topic="com.intellij.openapi.editor.event.EditorFactoryListener"/>
     </applicationListeners>
 
     <actions>
