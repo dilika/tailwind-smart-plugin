@@ -27,6 +27,12 @@
         <li>Vue</li>
         <li>PHP</li>
     </ul>
+
+    <h2>Support the Project</h2>
+    <p>If this plugin accelerates your workflow, consider fueling its continued development with a donation on
+        <a href="https://ko-fi.com/dilika" target="_blank" rel="noopener">Ko-fi</a>. Every contribution—small or
+        large—directly funds new features, refinements, and long-term maintenance. Thank you for keeping the
+        innovation alive!</p>
     ]]></description>
 
     <!-- Product and plugin compatibility requirements -->

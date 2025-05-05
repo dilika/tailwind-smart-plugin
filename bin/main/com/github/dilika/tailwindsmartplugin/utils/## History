@@ -1,0 +1,84 @@
+## History
+[8 Commits](https://github.com/danieiff/tailwindcss-class-to-json/commits/main/)
+[out](https://github.com/danieiff/tailwindcss-class-to-json/tree/main/out)
+[out](https://github.com/danieiff/tailwindcss-class-to-json/tree/main/out)
+[.gitignore](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/.gitignore)
+[.gitignore](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/.gitignore)
+[LICENSE](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/LICENSE)
+[LICENSE](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/LICENSE)
+[README.md](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/README.md)
+[README.md](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/README.md)
+[index.js](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/index.js)
+[index.js](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/index.js)
+[index.ts](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/index.ts)
+[index.ts](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/index.ts)
+[package-lock.json](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/package-lock.json)
+[package-lock.json](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/package-lock.json)
+[package.json](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/package.json)
+[package.json](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/package.json)
+[tsconfig.json](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/tsconfig.json)
+[tsconfig.json](https://github.com/danieiff/tailwindcss-class-to-json/blob/main/tsconfig.json)
+
+## Repository files navigation
+- README
+- Unlicense license
+README
+Unlicense license
+
+## Notes
+Logics are in index.ts.
+
+```
+index.ts
+```
+
+Let tailwindcss and postcss generate all css by specifying safelist: [{ pattern: /./ }] in config of tailwindcss.
+
+```
+safelist: [{ pattern: /./ }]
+```
+
+Refer [tailwindlabs/tailwindcss#8147 (comment)](https://github.com/tailwindlabs/tailwindcss/discussions/8147)
+Generated json file will be located in out directory.
+
+```
+out
+```
+
+## Usage
+1. 
+npm install: install dependencies
+
+2. 
+npm run build: builds main index.js
+
+3. 
+npm run generate: generates json file
+
+npm install: install dependencies
+
+```
+npm install
+```
+
+npm run build: builds main index.js
+
+```
+npm run build
+```
+
+npm run generate: generates json file
+
+```
+npm run generate
+```
+
+or
+*supports deno: deno run index.ts (oneshot!)
+
+```
+deno run index.ts
+```
+
+## About
+Generates one json file of tailwindcss's all utility classes

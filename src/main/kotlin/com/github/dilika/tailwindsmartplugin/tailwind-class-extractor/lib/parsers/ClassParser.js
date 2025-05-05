@@ -174,26 +174,85 @@ export class ClassParser {
     }
 
     parse(css, classes) {
-        const cssRules = this._extractCssRules(css);
         const result = {};
 
-        // Mise à jour des statistiques d'utilisation
-        classes.forEach(cls => {
-            this._usageStats.set(cls, (this._usageStats.get(cls) || 0) + 1);
-        });
+        // Parsing de base des règles CSS
+        const cssRules = this._extractCssRules(css);
 
-        for (const className of classes) {
-            if (this._resultCache.has(className)) {
-                result[className] = this._resultCache.get(className);
-                continue;
+        // Support pour les classes combinées (séparation par espace)
+        const allClasses = new Set();
+        for (const classOrGroup of classes) {
+            // Ignorer les classes vides
+            if (!classOrGroup || classOrGroup.trim() === '') continue;
+
+            // Détecter si c'est une combinaison de classes
+            if (classOrGroup.includes(' ')) {
+                // Fractionner en classes individuelles
+                const individualClasses = classOrGroup.split(/\s+/);
+                individualClasses.forEach(cls => allClasses.add(cls.trim()));
+
+                // Ajouter aussi la combinaison comme une entité unique pour l'autocomplétion
+                allClasses.add(classOrGroup.trim());
+            } else {
+                allClasses.add(classOrGroup.trim());
+            }
+        }
+
+        // Parse chaque classe
+        for (const className of allClasses) {
+            // Skip if empty (check again after splitting)
+            if (!className || className.trim() === '') continue;
+
+            // Détection des variantes (comme hover:, focus:, dark:)
+            const hasVariant = className.includes(':');
+            let baseClass = className;
+            let variant = null;
+
+            if (hasVariant) {
+                const parts = className.split(':');
+                variant = parts[0];
+                baseClass = parts.slice(1).join(':');
             }
 
-            const parsed = this._parseClass(className);
-            const cssRule = cssRules.get(className) || this._generateCss(parsed);
-            const formatted = this._formatResult(parsed, cssRule);
+            // Mémoisation pour éviter le duplicate parsing
+            if (!this._classCache.has(baseClass)) {
+                // Détection des valeurs arbitraires
+                if (baseClass.includes('[') && baseClass.includes(']')) {
+                    this._classCache.set(baseClass, this._parseArbitraryValue(baseClass));
+                } else {
+                    this._classCache.set(baseClass, this._parseClass(baseClass));
+                }
+            }
 
-            this._resultCache.set(className, formatted);
-            result[className] = formatted;
+            const parsed = this._classCache.get(baseClass);
+            if (!parsed) continue;  // Skip invalid classes
+
+            // Ajouter les infos de variante si présentes
+            if (variant) {
+                parsed.variant = variant;
+                parsed.hasVariant = true;
+            }
+
+            // Génération du CSS
+            if (!this._cssCache.has(baseClass)) {
+                this._cssCache.set(baseClass, this._generateCss(parsed));
+            }
+
+            // Calcul de la pertinence pour le tri
+            const relevance = this._calculateRelevance(parsed);
+
+            // Déterminer si c'est une classe combinée
+            const isCombined = className.includes(' ');
+
+            // Format final de l'objet pour cette classe
+            result[className] = {
+                ...this._formatResult(parsed, cssRules[baseClass] || this._cssCache.get(baseClass) || ''),
+                relevance,
+                variant: variant,
+                hasVariant: !!variant,
+                isCombination: isCombined,
+                components: isCombined ? className.split(/\s+/).map(c => c.trim()) : null
+            };
         }
 
         return result;
@@ -383,17 +442,101 @@ export class ClassParser {
 
     // Méthodes spécifiques au type
     _generateSpacingCss(parsed) {
-        const value = this._sizeValues[parsed.value] || parsed.value;
-        const properties = Array.isArray(parsed.property.property)
-            ? parsed.property.property
-            : [parsed.property.property];
+        // Valeurs standard de Tailwind CSS
+        const valueMap = {
+            '0': '0px',
+            'px': '1px',
+            '0.5': '0.125rem',
+            '1': '0.25rem',
+            '1.5': '0.375rem',
+            '2': '0.5rem',
+            '2.5': '0.625rem',
+            '3': '0.75rem',
+            '3.5': '0.875rem',
+            '4': '1rem',
+            '5': '1.25rem',
+            '6': '1.5rem',
+            '8': '2rem',
+            '10': '2.5rem',
+            '12': '3rem',
+            '16': '4rem',
+            '20': '5rem',
+            '24': '6rem',
+            '32': '8rem',
+            '40': '10rem',
+            '48': '12rem',
+            '56': '14rem',
+            '64': '16rem',
+            '72': '18rem',
+            '80': '20rem',
+            '96': '24rem',
+            'full': '100%'
+        };
 
-        const declarations = properties.map(prop => `${prop}: ${value};`).join(' ');
-        return `.${parsed.base} { ${declarations} }`;
+        // Convertir la valeur Tailwind en valeur CSS
+        const cssValue = valueMap[parsed.value] || parsed.value || '1rem';
+        return `${parsed.prefix}: ${cssValue};`;
     }
 
     _generateColorCss(parsed) {
-        return `.${parsed.base} { ${parsed.property.property}: var(--${parsed.base.replace('-', '-')}); }`;
+        // Map des couleurs Tailwind v4
+        const colorMap = {
+            'slate': { 50: '#f8fafc', 100: '#f1f5f9', 500: '#64748b', 900: '#0f172a' },
+            'gray': { 50: '#f9fafb', 100: '#f3f4f6', 500: '#6b7280', 900: '#111827' },
+            'zinc': { 50: '#fafafa', 100: '#f4f4f5', 500: '#71717a', 900: '#18181b' },
+            'red': { 50: '#fef2f2', 100: '#fee2e2', 500: '#ef4444', 900: '#7f1d1d' },
+            'orange': { 50: '#fff7ed', 100: '#ffedd5', 500: '#f97316', 900: '#7c2d12' },
+            'amber': { 50: '#fffbeb', 100: '#fef3c7', 500: '#f59e0b', 900: '#78350f' },
+            'yellow': { 50: '#fefce8', 100: '#fef9c3', 500: '#eab308', 900: '#713f12' },
+            'lime': { 50: '#f7fee7', 100: '#ecfccb', 500: '#84cc16', 900: '#365314' },
+            'green': { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 900: '#14532d' },
+            'emerald': { 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 900: '#064e3b' },
+            'teal': { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 900: '#134e4a' },
+            'cyan': { 50: '#ecfeff', 100: '#cffafe', 500: '#06b6d4', 900: '#164e63' },
+            'sky': { 50: '#f0f9ff', 100: '#e0f2fe', 500: '#0ea5e9', 900: '#0c4a6e' },
+            'blue': { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 900: '#1e3a8a' },
+            'indigo': { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 900: '#312e81' },
+            'violet': { 50: '#f5f3ff', 100: '#ede9fe', 500: '#8b5cf6', 900: '#4c1d95' },
+            'purple': { 50: '#faf5ff', 100: '#f3e8ff', 500: '#a855f7', 900: '#581c87' },
+            'fuchsia': { 50: '#fdf4ff', 100: '#fae8ff', 500: '#d946ef', 900: '#701a75' },
+            'pink': { 50: '#fdf2f8', 100: '#fce7f3', 500: '#ec4899', 900: '#831843' },
+            'rose': { 50: '#fff1f2', 100: '#ffe4e6', 500: '#f43f5e', 900: '#881337' },
+            // Nouvelles couleurs Tailwind v4
+            'copper': { 500: '#c25d45' },
+            'jungle': { 500: '#2c9f4b' },
+            'midnight': { 500: '#1e293b' },
+            'sunset': { 500: '#ff7e33' },
+            'marine': { 500: '#105a8c' }
+        };
+
+        // Extraire la couleur et la nuance
+        let colorBase = '';
+        let shade = '500'; // Nuance par défaut
+
+        if (parsed.colorValue) {
+            const parts = parsed.colorValue.split('-');
+            if (parts.length >= 2) {
+                colorBase = parts[0];
+                shade = parts[1];
+            } else {
+                colorBase = parsed.colorValue;
+            }
+        }
+
+        // Déterminer la propriété CSS basée sur le préfixe
+        let property = 'color';
+        if (parsed.prefix.startsWith('bg')) {
+            property = 'background-color';
+        } else if (parsed.prefix.startsWith('border')) {
+            property = 'border-color';
+        } else if (parsed.prefix.startsWith('text')) {
+            property = 'color';
+        }
+
+        // Récupérer la couleur du map ou utiliser la valeur hexadécimale directe
+        const hexColor = colorMap[colorBase]?.[shade] || parsed.hexColor || '#38bdf8';
+
+        return `${property}: ${hexColor};`;
     }
 
     _generateArbitraryCss(parsed) {
@@ -404,22 +547,73 @@ export class ClassParser {
     }
 
     _parseArbitraryValue(className) {
-        const match = className.match(/^\[(.+)\]$/);
+        const match = className.match(/\[(.*?)\]/);
         if (!match) return null;
 
-        const content = match[1];
+        const value = match[1];
+        const prefix = className.split('[')[0];
 
-        // Détection des valeurs CSS simples
-        if (/^([a-z-]+):\s*.+;?$/.test(content)) {
-            return { type: 'css-declaration', value: content };
-        }
+        return {
+            isArbitrary: true,
+            value: value,
+            // Récupère le préfixe correctement sans supprimer tous les tirets
+            prefix: prefix.endsWith('-') ? prefix.slice(0, -1) : prefix,
+            rawClassName: className,
+            // Déterminer le type en fonction du préfixe
+            type: this._determineType(prefix),
+            // Identifier si c'est une couleur arbitraire
+            isColor: value.startsWith('#') || value.startsWith('rgb') || value.includes('var(--color'),
+            // Propriété CSS probable
+            property: this._getPropertyFromPrefix(prefix)
+        };
+    }
 
-        // Valeurs CSS simples
-        if (/^([0-9a-z%#(),. ]+)$/.test(content)) {
-            return { type: 'css-value', value: content };
-        }
+    // Nouvelle méthode pour déduire la propriété CSS à partir du préfixe
+    _getPropertyFromPrefix(prefix) {
+        const propertyMap = {
+            'w': 'width',
+            'h': 'height',
+            'min-w': 'min-width',
+            'min-h': 'min-height',
+            'max-w': 'max-width',
+            'max-h': 'max-height',
+            'p': 'padding',
+            'px': 'padding-inline',
+            'py': 'padding-block',
+            'pt': 'padding-top',
+            'pr': 'padding-right',
+            'pb': 'padding-bottom',
+            'pl': 'padding-left',
+            'm': 'margin',
+            'mx': 'margin-inline',
+            'my': 'margin-block',
+            'mt': 'margin-top',
+            'mr': 'margin-right',
+            'mb': 'margin-bottom',
+            'ml': 'margin-left',
+            'bg': 'background-color',
+            'text': 'color',
+            'border': 'border-color',
+            'rounded': 'border-radius',
+            'gap': 'gap',
+            'gap-x': 'column-gap',
+            'gap-y': 'row-gap',
+            'opacity': 'opacity',
+            'z': 'z-index',
+            'top': 'top',
+            'right': 'right',
+            'bottom': 'bottom',
+            'left': 'left',
+            'inset': 'inset',
+            'translate-x': 'transform: translateX',
+            'translate-y': 'transform: translateY',
+            'rotate': 'transform: rotate',
+            'scale': 'transform: scale',
+            'skew-x': 'transform: skewX',
+            'skew-y': 'transform: skewY'
+        };
 
-        return { type: 'unknown', value: content };
+        return propertyMap[prefix] || prefix;
     }
 
     _generateSpacingExample(parsed) {

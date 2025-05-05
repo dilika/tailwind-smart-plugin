@@ -53,6 +53,14 @@ object TailwindUtils {
         val baseClasses = mutableListOf<String>()
         val allClasses = mutableListOf<String>()
         
+        // Ajouter les classes spécifiques demandées
+        val specificClasses = listOf(
+            "h-full", "bg-white", "rounded-lg", "overflow-hidden", "px-2.5", "min-h-[48px]", "font-semibold",
+            "h-5", "w-5", "text-emerald-500", "flex-shrink-0", "mr-2", "mt-0.5", "w-full", "py-4", "px-4",
+            "justify-between", "items-center", "min-w-[200px]", "max-w-7xl", "mx-auto", "gap-x-4", "gap-y-3"
+        )
+        baseClasses.addAll(specificClasses)
+        
         // Tailwind v4 color palette
         val colors = listOf(
             // Original colors
@@ -147,7 +155,9 @@ object TailwindUtils {
             // Fractional values
             "1/2", "1/3", "2/3", "1/4", "2/4", "3/4", "1/5", "2/5", "3/5", "4/5",
             // Screen-based values
-            "full", "screen", "min", "max", "fit", "svh", "lvh", "dvh"
+            "full", "screen", "min", "max", "fit", "svh", "lvh", "dvh",
+            // Decimal values fréquemment utilisées
+            "1.5", "2.5", "3.5", "4.5", "5.5", "6.5", "7.5", "8.5", "9.5"
         )
         
         // Expanded spacing prefixes for Tailwind v4
@@ -166,6 +176,86 @@ object TailwindUtils {
             }
         }
         
+        // === SIZING (w-, h-, max/min) ===
+        val sizePrefixes = listOf("w", "h", "min-w", "max-w", "min-h", "max-h")
+        for (prefix in sizePrefixes) {
+            for (value in spacingValues) {
+                baseClasses.add("$prefix-$value")
+            }
+        }
+        
+        // === ROUNDED ===
+        val radiusValues = listOf("none", "sm", "md", "lg", "xl", "2xl", "3xl", "full")
+        val roundedPrefixes = listOf(
+            "rounded", "rounded-t", "rounded-r", "rounded-b", "rounded-l", 
+            "rounded-tl", "rounded-tr", "rounded-br", "rounded-bl"
+        )
+        
+        // Base "rounded" sans valeur
+        baseClasses.add("rounded")
+        for (prefix in roundedPrefixes) {
+            for (value in radiusValues) {
+                baseClasses.add("$prefix-$value")
+            }
+        }
+        
+        // === OVERFLOW ===
+        val overflowVariants = listOf("auto", "hidden", "visible", "scroll")
+        for (variant in overflowVariants) {
+            baseClasses.add("overflow-$variant")
+            baseClasses.add("overflow-x-$variant")
+            baseClasses.add("overflow-y-$variant")
+        }
+        
+        // === SHADOWS ===
+        val shadowVariants = listOf("shadow", "shadow-sm", "shadow-md", "shadow-lg", "shadow-xl", "shadow-2xl", "shadow-inner", "shadow-none")
+        baseClasses.addAll(shadowVariants)
+        
+        // === RING WIDTH & INSET ===
+        val ringWidths = listOf("ring", "ring-0", "ring-1", "ring-2", "ring-4", "ring-8", "ring-inset")
+        baseClasses.addAll(ringWidths)
+        
+        // === RING COLORS ===
+        for (color in colors) {
+            for (shade in shades) {
+                baseClasses.add("ring-$color-$shade")
+            }
+        }
+        
+        // === OUTLINE ===
+        val outlineWidths = listOf("outline-none", "outline", "outline-0", "outline-1", "outline-2", "outline-4", "outline-8")
+        baseClasses.addAll(outlineWidths)
+        for (color in colors) {
+            for (shade in shades) {
+                baseClasses.add("outline-$color-$shade")
+            }
+        }
+        
+        // === PLACEHOLDER, ACCENT, CARET, FILL, STROKE COLORS ===
+        val colorUtilities = listOf("placeholder", "accent", "caret", "fill", "stroke")
+        for (util in colorUtilities) {
+            for (color in colors) {
+                for (shade in shades) {
+                    baseClasses.add("$util-$color-$shade")
+                }
+            }
+        }
+        
+        // === ASPECT RATIO ===
+        baseClasses.addAll(listOf("aspect-auto", "aspect-square", "aspect-video"))
+        
+        // === ACCESSIBILITY ===
+        baseClasses.addAll(listOf("sr-only", "not-sr-only"))
+        
+        // === LIST STYLE ===
+        baseClasses.addAll(listOf("list-none", "list-disc", "list-decimal", "list-inside", "list-outside"))
+        
+        // === COLUMNS ===
+        val columnSizes = (1..12).map { it.toString() } + listOf("auto", "3xs", "2xs", "xs", "sm", "md", "lg", "xl", "2xl", "3xl", "4xl")
+        for (size in columnSizes) {
+            baseClasses.add("columns-$size")
+        }
+        
         // Typography - Tailwind v4 additions
         baseClasses.addAll(listOf(
             // Font Family - added system fonts
@@ -180,6 +270,10 @@ object TailwindUtils {
             "font-thin", "font-extralight", "font-light", "font-normal", "font-medium", 
             "font-semibold", "font-bold", "font-extrabold", "font-black", "font-100", "font-200", "font-300",
             "font-400", "font-500", "font-600", "font-700", "font-800", "font-900",
+            
+            // Utilities spécifiques à Tailwind v4
+            "font-leading-tight", "font-leading-normal", "font-leading-loose",
+            "font-tracking-tight", "font-tracking-normal", "font-tracking-wide",
             
             // Letter Spacing
             "tracking-tighter", "tracking-tight", "tracking-normal", "tracking-wide", "tracking-wider", "tracking-widest",
@@ -232,7 +326,7 @@ object TailwindUtils {
         // Effects
         baseClasses.addAll(listOf(
             // Shadows
-            "shadow-none", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-2xl", "shadow-inner",
+            "shadow-none", "shadow-sm", "shadow-md", "shadow-lg", "shadow-xl", "shadow-2xl", "shadow-inner",
             
             // Opacity
             "opacity-0", "opacity-5", "opacity-10", "opacity-20", "opacity-25", "opacity-30", "opacity-40", 
@@ -268,41 +362,43 @@ object TailwindUtils {
             "-bottom-11", "-bottom-12", "-bottom-14", "-bottom-16", "-bottom-20", "-bottom-24", "-bottom-28", "-bottom-32", "-bottom-36", "-bottom-40", "-bottom-44", "-bottom-48", "-bottom-52", "-bottom-56", "-bottom-60", "-bottom-64", "-bottom-72", "-bottom-80", "-bottom-96", "-bottom-full",
             "-left-0", "-left-px", "-left-0.5", "-left-1", "-left-1.5", "-left-2", "-left-2.5", "-left-3", "-left-3.5", "-left-4", "-left-5", "-left-6", "-left-7", "-left-8", "-left-9", "-left-10",
             "-left-11", "-left-12", "-left-14", "-left-16", "-left-20", "-left-24", "-left-28", "-left-32", "-left-36", "-left-40", "-left-44", "-left-48", "-left-52", "-left-56", "-left-60", "-left-64", "-left-72", "-left-80", "-left-96", "-left-full",
-            "-right-0", "-right-px", "-right-0.5", "-right-1", "-right-1.5", "-right-2", "-right-2.5", "-right-3", "-right-3.5", "-right-4", "-right-5", "-right-6", "-right-7", "-right-8", "-right-9", "-right-10",
             "-right-11", "-right-12", "-right-14", "-right-16", "-right-20", "-right-24", "-right-28", "-right-32", "-right-36", "-right-40", "-right-44", "-right-48", "-right-52", "-right-56", "-right-60", "-right-64", "-right-72", "-right-80", "-right-96", "-right-full"
         ))
         
         // Now let's handle the variants (responsive, state, etc.)
-        // First, we'll add all base classes to the final list
-        allClasses.addAll(baseClasses)
         
-        // Define responsive breakpoint prefixes
+        // Responsive breakpoint prefixes
         val breakpointPrefixes = listOf("sm", "md", "lg", "xl", "2xl")
         
-        // Define state variants
-        val stateVariants = listOf(
-            "hover", "focus", "active", "visited", "focus-within", "focus-visible", "disabled", "checked", 
-            "first", "last", "odd", "even", "dark", "motion-safe", "motion-reduce", "portrait", "landscape"
+        // Pseudo-class / state variants
+        val pseudoClasses = listOf(
+            "hover", "focus", "active", "disabled", "visited", "checked", "first", "last", "odd", "even",
+            "group-hover", "focus-within", "focus-visible", "aria-selected", "aria-disabled", "aria-hidden", "aria-expanded",
+            "peer", "peer-checked", "peer-focus", "peer-hover", "before", "after", "placeholder", "selection", "marker", "file",
+            "data", "dark", "motion-safe", "motion-reduce", "landscape", "portrait", "print"
         )
         
-        // Add arbitrary value placeholders for common properties
-        val arbitraryValueProperties = listOf(
+        // First, we'll add all base classes
+        allClasses.addAll(baseClasses)
+        
+        // Support des classes avec valeurs arbitraires (notation entre crochets)
+        val arbitraryProperties = listOf(
             "w", "h", "min-w", "min-h", "max-w", "max-h", "p", "px", "py", "pt", "pr", "pb", "pl",
-            "m", "mx", "my", "mt", "mr", "mb", "ml", "inset", "top", "right", "bottom", "left",
-            "translate-x", "translate-y", "rotate", "scale", "scale-x", "scale-y", "skew-x", "skew-y"
+            "m", "mx", "my", "mt", "mr", "mb", "ml", "top", "right", "bottom", "left", "inset",
+            "gap", "gap-x", "gap-y", "text", "leading", "tracking", "rounded", "translate-x", "translate-y",
+            "rotate", "scale", "skew-x", "skew-y", "z", "opacity"
         )
         
-        // Add arbitrary value examples
-        val arbitraryValueExamples = listOf(
-            "10px", "2rem", "50%", "100vh", "100vw", "calc(100% - 2rem)", "60rem", "200px", 
-            "5em", "50vh", "90deg", "1.5"
+        // Ajouter quelques exemples de classes avec valeurs arbitraires
+        val arbitraryValues = listOf(
+            "[10px]", "[48px]", "[100px]", "[200px]", "[300px]", "[400px]", "[500px]", "[50%]", "[60%]", "[70%]", "[80%]", "[90%]",
+            "[calc(100%-2rem)]", "[calc(100vh-80px)]", "[fit-content]", "[3em]", "[5ch]", "[min-content]", "[max-content]",
+            "[#ff5500]", "[var(--color-primary)]", "[theme(colors.blue.500)]"
         )
         
-        // Add a representative set of arbitrary value classes
-        for (prop in arbitraryValueProperties) {
-            // Add a few examples of arbitrary values for each property
-            for (example in arbitraryValueExamples.take(3)) { // Limit to 3 examples per property to keep the set manageable
-                baseClasses.add("$prop-[$example]")
+        for (prop in arbitraryProperties) {
+            for (value in arbitraryValues) {
+                allClasses.add("$prop-$value")
             }
         }
         
@@ -342,7 +438,7 @@ object TailwindUtils {
             "cursor-", "outline", "ring", "z-", "visible", "invisible", "block", "flex", "grid", "hidden"
         )
         
-        for (variant in stateVariants) {
+        for (variant in pseudoClasses) {
             for (baseClass in baseClasses) {
                 // Only add state variants for classes that commonly use them
                 if (interactiveClassPatterns.any { baseClass.startsWith(it) }) {
