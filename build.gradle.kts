@@ -53,17 +53,59 @@ tasks {
 
         // Plugin description
         pluginDescription.set("""
-            <p>Tailwind CSS Smart Plugin provides intelligent completion for Tailwind CSS classes.</p>
-            <p>Features:</p>
+            <h1>Tailwind CSS Smart Plugin</h1>
+            <p>Elevate your Tailwind CSS development experience in IntelliJ IDEs with smart features designed for speed and precision.</p>
+
+            <h2>Key Features</h2>
             <ul>
-              <li>Smart auto-completion for Tailwind CSS classes</li>
-              <li>Visual indicators for color-related classes</li>
-              <li>Compatible with HTML, JSX, and TSX files</li>
+                <li>
+                    <strong>Advanced Auto-Completion:</strong>
+                    <ul>
+                        <li>Comprehensive suggestions for Tailwind CSS utility classes, <strong>including Tailwind v4 support</strong>.</li>
+                        <li><strong>Dynamically prioritized suggestions</strong> that adapt to your typing for maximum relevance.</li>
+                        <li><strong>Smart Class Group Suggestions:</strong> Access common UI patterns (buttons, alerts, cards, avatars, modals, etc.) with ready-to-use class combinations.</li>
+                        <li><strong>Categorized popups</strong> with intuitive, <strong>color-coded icons</strong> for quick visual identification.</li>
+                        <li>Smart detection of your project's <code>tailwind.config.js</code> for <strong>custom class support</strong> and theme values.</li>
+                    </ul>
+                </li>
+                <li><strong>Automatic Project Setup:</strong> Detects your project's Tailwind configuration (<code>tailwind.config.js</code>) on startup to tailor suggestions and documentation.</li>
             </ul>
+
+            <h2>Supported Languages & Frameworks</h2>
+            <p>Enjoy a consistent experience across a wide range of web technologies:</p>
+            <ul>
+                <li>HTML, XML</li>
+                <li>JavaScript (including JSX for React, Qwik, Solid)</li>
+                <li>TypeScript (including TSX for React, Qwik, Solid)</li>
+                <li>Vue.js (<code>.vue</code> files)</li>
+                <li>PHP (including Blade templates)</li>
+                <li>Svelte</li>
+                <li>Astro</li>
+                <li>Other template languages where class attributes are common.</li>
+            </ul>
+            
+            <h2>⭐️ Support This Plugin</h2>
+            <div style="padding: 12px; background-color: #f1f5f9; border-radius: 8px; margin: 15px 0;">
+                <p style="font-weight: 500;">This plugin is <strong>saving developers valuable time</strong> every day. <em>Be part of its early growth story!</em></p>
+                <p>Unlike many premium Tailwind tools that cost $10-15/month, this plugin is completely <strong>free</strong>. If it has improved your workflow:</p>
+                <div style="text-align: center; margin: 15px 0;">
+                    <a href="https://ko-fi.com/dilika" style="display: inline-block; background-color: #0ea5e9; color: white; font-weight: bold; padding: 10px 20px; text-decoration: none; border-radius: 6px;">☕️ Buy Me a Coffee</a>
+                </div>
+                <p style="font-size: 0.9em; font-style: italic;">Your early support is crucial! It directly enables new features, better tools, and ensures the plugin's future. <strong>Help this plugin reach its full potential</strong> and shape its development!</p>
+            </div>
         """.trimIndent())
 
         // Change notes
         changeNotes.set("""
+            <h2>1.2.0</h2>
+            <ul>
+              <li><strong>Enhanced Relevance:</strong> Intelligently sorted suggestions based on your typing for an optimal experience</li>
+              <li><strong>Extended Coverage:</strong> Complete support for common Tailwind classes (inline-block, px-3, py-1, text-indigo-600, etc.)</li>
+              <li><strong>New Icon:</strong> Clean and professional design with official Tailwind colors</li>
+              <li><strong>Optimizations:</strong> Improved performance and stability of auto-completion</li>
+              <li><strong>Expanded Compatibility:</strong> Better support for various frameworks and languages</li>
+            </ul>
+            
             <h2>0.0.2</h2>
             <ul>
               <li>Extensive support for Tailwind v1–v4 utilities</li>
