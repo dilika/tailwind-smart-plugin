@@ -4,12 +4,24 @@ import com.github.dilika.tailwindsmartplugin.utils.TailwindUtils
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.lang.Language
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.elementType
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.ui.JBColor
 import com.intellij.util.ProcessingContext
-import com.intellij.util.ui.ColorIcon
 import org.json.JSONObject
+import java.awt.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
 /**
@@ -181,16 +193,120 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
         // Récupérer les données des classes Tailwind
         val tailwindData = TailwindUtils.getTailwindClassData(project)
         
-        // Ajouter toutes les classes Tailwind avec mise en cache pour optimiser les performances
-        allTailwindClasses.forEach { className ->
+        // Extraire le préfixe de saisie (ce que l'utilisateur tape actuellement)
+        val userPrefix = parameters.position.text.let { 
+            val index = parameters.offset - parameters.position.textRange.startOffset
+            if (index > 0 && index <= it.length) it.substring(0, index) else ""
+        }
+        
+        // Grouper et tri intelligent des classes
+        val exactMatches = mutableListOf<String>()
+        val prefixMatches = mutableListOf<String>()
+        val containsMatches = mutableListOf<String>()
+        val otherClasses = mutableListOf<String>()
+        
+        // Classer les classes par pertinence
+        if (userPrefix.isNotEmpty()) {
+            allTailwindClasses.forEach { className ->
+                when {
+                    // 1. Correspondance exacte du début (priorité absolue)
+                    className.startsWith(userPrefix) -> exactMatches.add(className)
+                    
+                    // 2. Correspondance après un délimiteur (p- suivi de 4 dans p-4)
+                    className.contains("-$userPrefix") || 
+                    className.contains(":$userPrefix") -> prefixMatches.add(className)
+                    
+                    // 3. Contient la chaîne quelque part
+                    className.contains(userPrefix) -> containsMatches.add(className)
+                    
+                    // 4. Autres classes non pertinentes
+                    else -> otherClasses.add(className)
+                }
+            }
+        } else {
+            // Sans préfixe, afficher les classes communes en premier
+            allTailwindClasses.forEach { className ->
+                if (isCommonClass(className)) {
+                    prefixMatches.add(className) // Utiliser prefixMatches pour les classes communes
+                } else {
+                    otherClasses.add(className)
+                }
+            }
+        }
+
+        // Trier chaque groupe par longueur (plus court d'abord)
+        val comparator = compareBy<String> { it.length }
+        exactMatches.sortWith(comparator)
+        prefixMatches.sortWith(comparator)
+        containsMatches.sortWith(comparator)
+        
+        // Ajouter les classes dans l'ordre de pertinence avec des valeurs de priorité décroissantes
+        var priority = 1000.0
+        
+        // 1. Correspondances exactes au début (priorité maximale)
+        exactMatches.forEach { className ->
             val element = lookupElementCache[className] ?: createLookupElementWithCache(className, tailwindData).also { 
                 lookupElementCache[className] = it 
             }
-            resultSet.addElement(element)
+            resultSet.addElement(PrioritizedLookupElement.withPriority(element, priority--))
         }
         
-        // Suggérer des groupes de classes couramment utilisés ensemble pour le formatage intelligent
+        // 2. Correspondances après un délimiteur
+        prefixMatches.forEach { className ->
+            val element = lookupElementCache[className] ?: createLookupElementWithCache(className, tailwindData).also { 
+                lookupElementCache[className] = it 
+            }
+            resultSet.addElement(PrioritizedLookupElement.withPriority(element, priority--))
+        }
+        
+        // 3. Correspondances contenant la chaîne
+        containsMatches.forEach { className ->
+            val element = lookupElementCache[className] ?: createLookupElementWithCache(className, tailwindData).also { 
+                lookupElementCache[className] = it 
+            }
+            resultSet.addElement(PrioritizedLookupElement.withPriority(element, priority--))
+        }
+        
+        // 4. Autres classes non pertinentes - priorité la plus basse
+        otherClasses.forEach { className ->
+            val element = lookupElementCache[className] ?: createLookupElementWithCache(className, tailwindData).also { 
+                lookupElementCache[className] = it 
+            }
+            resultSet.addElement(PrioritizedLookupElement.withPriority(element, priority--))
+        }
+        
+        // Suggérer des groupes de classes avec une priorité VRAIMENT basse
         suggestClassGroups(parameters, resultSet, tailwindData)
+    }
+    
+    /**
+     * Détermine si une classe est commune/populaire
+     */
+    private fun isCommonClass(className: String): Boolean {
+        val commonClasses = setOf(
+            "flex", "grid", "block", "inline-block", "hidden",
+            "w-full", "h-full", "w-auto", "h-auto",
+            "p-4", "p-2", "px-4", "py-2", "m-4", "m-2", "mx-auto", 
+            "text-center", "text-left", "text-right",
+            "text-sm", "text-base", "text-lg", "text-xl",
+            "font-bold", "font-medium", "font-normal",
+            "bg-white", "bg-black", "bg-transparent", "bg-gray-100", "bg-gray-200",
+            "text-gray-600", "text-gray-700", "text-gray-800", "text-gray-900",
+            "rounded", "rounded-md", "rounded-lg", "rounded-full",
+            "border", "border-gray-200", "border-gray-300",
+            "shadow", "shadow-md", "shadow-lg",
+            "flex-row", "flex-col", "items-center", "justify-center", "justify-between",
+            "space-x-2", "space-x-4", "space-y-2", "space-y-4",
+            "hover:bg-gray-100", "hover:text-gray-900", "hover:underline"
+        )
+        
+        val commonPrefixes = listOf(
+            "flex", "grid", "p-", "m-", "text-", "bg-", "w-", "h-",
+            "items-", "justify-", "rounded", "border", "shadow"
+        )
+        
+        return className in commonClasses ||
+               commonPrefixes.any { prefix -> className.startsWith(prefix) }
     }
     
     /**
@@ -287,7 +403,47 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
             // Tables
             "table-row" to "bg-white border-b hover:bg-gray-50",
             "table-cell" to "px-6 py-4 whitespace-nowrap text-sm text-gray-900",
-            "table-header" to "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            "table-header" to "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
+
+            // === NOUVEAUX GROUPES AJOUTÉS ===
+            // Alertes / Notifications
+            "alert-info" to "p-4 mb-4 text-sm text-blue-700 bg-blue-100 rounded-lg dark:bg-blue-200 dark:text-blue-800",
+            "alert-success" to "p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200 dark:text-green-800",
+            "alert-warning" to "p-4 mb-4 text-sm text-yellow-700 bg-yellow-100 rounded-lg dark:bg-yellow-200 dark:text-yellow-800",
+            "alert-danger" to "p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800",
+
+            // Avatars
+            "avatar-sm" to "w-8 h-8 rounded-full object-cover",
+            "avatar-md" to "w-12 h-12 rounded-full object-cover",
+            "avatar-lg" to "w-16 h-16 rounded-full object-cover",
+
+            // Séparateurs
+            "divider-horizontal" to "h-px my-8 bg-gray-200 border-0 dark:bg-gray-700",
+            "divider-vertical" to "w-px mx-4 bg-gray-200 border-0 dark:bg-gray-700 self-stretch",
+
+            // Mises en page spécifiques Flexbox/Grid
+            "flex-sidebar-layout" to "flex min-h-screen", // Conteneur principal
+            "grid-gallery" to "grid grid-cols-2 md:grid-cols-3 gap-4",
+
+            // Liens stylisés
+            "link-underline" to "text-primary hover:underline",
+            "link-icon" to "inline-flex items-center text-primary hover:text-primary-dark",
+
+            // Listes
+            "list-disc" to "list-disc list-inside space-y-1",
+            "list-ordered" to "list-decimal list-inside space-y-1",
+
+            // Modales / Popups (structure de base)
+            "modal-overlay" to "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50",
+            "modal-content" to "bg-white p-6 rounded-lg shadow-xl max-w-md mx-auto",
+
+            // Squelettes de chargement (Loaders)
+            "skeleton-line" to "h-4 bg-gray-200 rounded w-3/4 animate-pulse",
+            "skeleton-avatar" to "w-12 h-12 bg-gray-300 rounded-full animate-pulse",
+
+            // Barres de progression
+            "progress-bar-wrapper" to "w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700",
+            "progress-bar-fill" to "bg-primary h-2.5 rounded-full" // Largeur à contrôler via style/JS
         )
         
         // Créer et ajouter des éléments de complétion pour les groupes de classes
@@ -330,7 +486,7 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
                     formatTailwindClasses(context, classGroup)
                 }
                 
-            resultSet.addElement(PrioritizedLookupElement.withPriority(element, 1000.0)) // Priorité élevée pour apparaître en haut
+            resultSet.addElement(PrioritizedLookupElement.withPriority(element, -1.0)) // Priorité plus basse pour les groupes
         }
     }
     
@@ -350,7 +506,7 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
         val isAlreadyInAttribute = try {
             val textBeforeOffset = maxOf(0, context.startOffset - 50) // Vérifier les 50 caractères précédents
             val textBefore = document.getText(com.intellij.openapi.util.TextRange(textBeforeOffset, context.startOffset))
-            textBefore.contains("className=") || textBefore.contains("class=")
+            textBefore.contains("className=") || textBefore.contains("className=\"")
         } catch (e: Exception) {
             false
         }

@@ -170,11 +170,28 @@ object TailwindUtils {
             "space-x", "space-y", "space-s", "space-e"
         )
         
+        // Générer toutes les combinaisons possibles de préfixes et de valeurs pour les spacings
         for (prefix in spacingPrefixes) {
             for (value in spacingValues) {
                 baseClasses.add("$prefix-$value")
             }
+            // Ajout des valeurs négatives pour les marges
+            if (prefix.startsWith("m")) {
+                for (value in spacingValues) {
+                    // Ignorer les valeurs qui ne peuvent pas être négatives
+                    if (value != "auto" && value != "full" && value != "screen" && value != "min" && value != "max" && value != "fit" && !value.contains("/")) {
+                        baseClasses.add("-$prefix-$value")
+                    }
+                }
+            }
         }
+        
+        // Ajouter explicitement les classes mentionnées par l'utilisateur pour s'assurer qu'elles sont couvertes
+        val explicitClasses = listOf(
+            "inline-block", "px-3", "py-1", "text-indigo-600", "font-medium", "text-xs", 
+            "uppercase", "tracking-wider", "mb-3", "mb-4", "mb-5", "mt-3", "mt-4", "mt-5"
+        )
+        baseClasses.addAll(explicitClasses)
         
         // === SIZING (w-, h-, max/min) ===
         val sizePrefixes = listOf("w", "h", "min-w", "max-w", "min-h", "max-h")
@@ -342,7 +359,7 @@ object TailwindUtils {
         // Add specific classes mentioned by users that might not be covered by patterns
         baseClasses.addAll(listOf(
             // Direct classes from user examples
-            "font-bold", "font-medium", "text-base", "text-xs", "mx-auto", "overflow-x-auto", "overflow-hidden", "py-3", "mb-3", "mb-8", "gap-4", "scrollbar-h", "justify-center", "uppercase", "tracking-wider", "text-indigo-600",
+            "font-bold", "font-medium", "text-base", "text-xs", "mx-auto", "overflow-x-auto", "overflow-hidden", "py-1", "py-3", "px-1", "px-2", "px-3", "px-4", "mb-1", "mb-2", "mb-3", "mb-8", "gap-4", "scrollbar-h", "justify-center", "justify-between", "uppercase", "tracking-wider", "text-indigo-600", "text-indigo-500", "text-indigo-700",
             // Specific fixed width/max-width utilities
             "max-w-xs", "max-w-sm", "max-w-md", "max-w-lg", "max-w-xl", "max-w-2xl", "max-w-3xl", "max-w-4xl", "max-w-5xl", "max-w-6xl", "max-w-7xl", "max-w-prose", "max-w-screen-sm", "max-w-screen-md", "max-w-screen-lg", "max-w-screen-xl", "max-w-screen-2xl",
             

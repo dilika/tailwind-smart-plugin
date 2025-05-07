@@ -1,32 +1,44 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.dilika.tailwindsmartplugin</id>
-    <icon>pluginIcon.svg</icon>
+    <icon>tailwind_smart_icon.svg</icon>
     <name>Tailwind CSS Support</name>
-    <vendor>dilika</vendor>
+    <version>1.1.0</version>
+    <vendor url="https://ko-fi.com/dilika">dilika</vendor>
     
     <!-- Compatibility with IntelliJ Platform Products -->
     <idea-version since-build="233" until-build="251.*"/>
     
     <description><![CDATA[
-    <h1>Tailwind CSS Support</h1>
-    <p>This plugin adds Tailwind CSS support to IntelliJ IDE.</p>
+    <h1>Tailwind CSS Smart Plugin</h1>
+    <p>Elevate your Tailwind CSS development experience in IntelliJ IDEs with smart features designed for speed and precision.</p>
 
-    <h2>Features</h2>
+    <h2>Key Features</h2>
     <ul>
-        <li>Tailwind CSS class auto-completion</li>
-        <li>Documentation on hover for classes</li>
-        <li>Automatic detection of project's Tailwind configuration</li>
-        <li>Support for custom classes</li>
+        <li>
+            <strong>Advanced Auto-Completion:</strong>
+            <ul>
+                <li>Comprehensive suggestions for Tailwind CSS utility classes, <strong>including Tailwind v4 support</strong>.</li>
+                <li><strong>Dynamically prioritized suggestions</strong> that adapt to your typing for maximum relevance.</li>
+                <li><strong>Smart Class Group Suggestions:</strong> Access common UI patterns (buttons, alerts, cards, avatars, modals, etc.) with ready-to-use class combinations.</li>
+                <li><strong>Categorized popups</strong> with intuitive, <strong>color-coded icons</strong> for quick visual identification.</li>
+                <li>Smart detection of your project's <code>tailwind.config.js</code> for <strong>custom class support</strong> and theme values.</li>
+            </ul>
+        </li>
+        <li><strong>Automatic Project Setup:</strong> Detects your project's Tailwind configuration (<code>tailwind.config.js</code>) on startup to tailor suggestions and documentation.</li>
     </ul>
 
-    <h2>Supported Languages</h2>
+    <h2>Supported Languages & Frameworks</h2>
+    <p>Enjoy a consistent experience across a wide range of web technologies:</p>
     <ul>
-        <li>HTML</li>
-        <li>XML</li>
-        <li>JSX/TSX (React)</li>
-        <li>Vue</li>
-        <li>PHP</li>
+        <li>HTML, XML</li>
+        <li>JavaScript (including JSX for React, Qwik, Solid)</li>
+        <li>TypeScript (including TSX for React, Qwik, Solid)</li>
+        <li>Vue.js (<code>.vue</code> files)</li>
+        <li>PHP (including Blade templates)</li>
+        <li>Svelte</li>
+        <li>Astro</li>
+        <li>Other template languages where class attributes are common.</li>
     </ul>
 
     <h2>Support the Project</h2>
@@ -37,6 +49,7 @@
     ]]></description>
 
     <!-- Product and plugin compatibility requirements -->
+    <buyUrl>https://ko-fi.com/dilika</buyUrl>
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lang</depends>
 
@@ -50,6 +63,11 @@
         <completion.contributor
                 language="any"
                 implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor"/>
+                
+        <!-- Documentation Provider for Tailwind CSS classes -->
+        <lang.documentationProvider
+                language="any"
+                implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider"/>
                 
         <!-- Project startup activity -->
         <postStartupActivity
@@ -71,17 +89,17 @@
         <lang.foldingBuilder 
                 language="Vue"
                 implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <!-- Click listener extension -->
+        <editorFactoryListener implementation="com.github.dilika.tailwindsmartplugin.listeners.TailwindFoldingClickListener"/>
     </extensions>
 
+    <!-- Remove the problematic application listener -->
+    <!-- 
     <applicationListeners>
-        <!-- Project listener for detecting file changes -->
         <listener class="com.github.dilika.tailwindsmartplugin.listeners.TailwindProjectListener"
                   topic="com.intellij.openapi.project.ProjectManagerListener"/>
-                  
-        <!-- Editor listener for automatic folding of Tailwind classes -->
-        <listener class="com.github.dilika.tailwindsmartplugin.listeners.TailwindEditorListener"
-                  topic="com.intellij.openapi.editor.event.EditorFactoryListener"/>
     </applicationListeners>
+    -->
 
     <actions>
         <!-- Add your actions here -->
