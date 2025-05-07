@@ -84,24 +84,29 @@ tasks {
                 <li>Other template languages where class attributes are common.</li>
             </ul>
             
-            <h2>⭐️ Support This Plugin</h2>
-            <div style="padding: 12px; background-color: #f1f5f9; border-radius: 8px; margin: 15px 0;">
-                <p style="font-weight: 500;">This plugin is <strong>saving developers valuable time</strong> every day. <em>Be part of its early growth story!</em></p>
-                <p>Unlike many premium Tailwind tools that cost $10-15/month, this plugin is completely <strong>free</strong>. If it has improved your workflow:</p>
+            <h2>✨ Fuel the Future of This Plugin</h2>
+            <div style="padding: 15px; background-color: #f0f9ff; border-radius: 8px; margin: 15px 0; border-left: 4px solid #0ea5e9;">
+                <p style="font-weight: 500;">Every day you use this plugin, <strong>you save precious development time</strong>. What would you do with an <em>extra hour each week</em>?</p>
+                <p>As one of the <strong>first 150 developers</strong> to discover this tool, you have a unique opportunity to influence what features get prioritized next!</p>
                 <div style="text-align: center; margin: 15px 0;">
-                    <a href="https://ko-fi.com/dilika" style="display: inline-block; background-color: #0ea5e9; color: white; font-weight: bold; padding: 10px 20px; text-decoration: none; border-radius: 6px;">☕️ Buy Me a Coffee</a>
+                    <a href="https://ko-fi.com/dilika" style="display: inline-block; background-color: #0ea5e9; color: white; font-weight: bold; padding: 10px 25px; text-decoration: none; border-radius: 6px; box-shadow: 0 2px 5px rgba(14, 165, 233, 0.2);">☕️ Support Development</a>
                 </div>
-                <p style="font-size: 0.9em; font-style: italic;">Your early support is crucial! It directly enables new features, better tools, and ensures the plugin's future. <strong>Help this plugin reach its full potential</strong> and shape its development!</p>
+                <p style="font-size: 0.9em;">Your contribution directly translates to:</p>
+                <ul style="font-size: 0.9em; margin-top: 5px;">
+                    <li><strong>New features</strong> you'll actually use (supporters get priority feature requests)</li>
+                    <li><strong>Lightning-fast updates</strong> when Tailwind releases new versions</li>
+                    <li><strong>Personalized support</strong> when you need assistance</li>
+                </ul>
+                <p style="font-size: 0.85em; font-style: italic; margin-top: 10px;">"The plugin has already saved me hours of work. Supporting its development was an easy decision." – Recent Contributor</p>
             </div>
         """.trimIndent())
 
         // Change notes
         changeNotes.set("""
-            <h2>1.2.0</h2>
+            <h2>1.2.1</h2>
             <ul>
               <li><strong>Enhanced Relevance:</strong> Intelligently sorted suggestions based on your typing for an optimal experience</li>
               <li><strong>Extended Coverage:</strong> Complete support for common Tailwind classes (inline-block, px-3, py-1, text-indigo-600, etc.)</li>
-              <li><strong>New Icon:</strong> Clean and professional design with official Tailwind colors</li>
               <li><strong>Optimizations:</strong> Improved performance and stability of auto-completion</li>
               <li><strong>Expanded Compatibility:</strong> Better support for various frameworks and languages</li>
             </ul>
@@ -110,7 +115,6 @@ tasks {
             <ul>
               <li>Extensive support for Tailwind v1–v4 utilities</li>
               <li>Color-coded icons & improved autocompletion visuals</li>
-              <li>Donation link added to plugin overview</li>
             </ul>
         """.trimIndent())
     }
