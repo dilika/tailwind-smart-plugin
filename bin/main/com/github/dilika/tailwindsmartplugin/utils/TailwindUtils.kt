@@ -20,6 +20,27 @@ object TailwindUtils {
     fun getTailwindClasses(project: Project): List<String> {
         val projectId = project.basePath ?: ""
         
+        // Use the TailwindConfigService to get dynamically generated classes based on the project's config
+        val configService = try {
+            com.github.dilika.tailwindsmartplugin.services.TailwindConfigService.getInstance(project)
+        } catch (e: Exception) {
+            logger.warn("Could not get TailwindConfigService: ${e.message}")
+            null
+        }
+        
+        // If we have a config service with a parsed config, use it to get classes
+        if (configService != null) {
+            val configClasses = configService.getTailwindClasses(project)
+            if (configClasses.isNotEmpty()) {
+                // Combine config classes with our base classes to ensure we have complete coverage
+                val baseClasses = generateTailwindClasses()
+                val combinedClasses = (baseClasses + configClasses).distinct()
+                tailwindClassesCache[projectId] = combinedClasses
+                return combinedClasses
+            }
+        }
+        
+        // Fallback to generate from our base logic if config service is not available
         return tailwindClassesCache.getOrPut(projectId) {
             try {
                 generateTailwindClasses()

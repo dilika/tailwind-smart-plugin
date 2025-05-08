@@ -30,8 +30,24 @@ dependencies {
 
 // IntelliJ Plugin configuration
 intellij {
-    version.set(project.property("platformVersion").toString())
-    type.set(project.property("platformType").toString())
+    // Allow overriding version and type from command line
+    // Use: ./gradlew runIde -PideaVersion=2024.1 -PideaType=IU
+    val ideaVersion = if (project.hasProperty("ideaVersion")) {
+        project.property("ideaVersion").toString()
+    } else {
+        project.property("platformVersion").toString()
+    }
+    
+    val ideaType = if (project.hasProperty("ideaType")) {
+        project.property("ideaType").toString()
+    } else {
+        project.property("platformType").toString()
+    }
+    
+    println("Building plugin for IntelliJ IDEA $ideaType-$ideaVersion")
+    
+    version.set(ideaVersion)
+    type.set(ideaType)
     updateSinceUntilBuild.set(true)
     
     // Only include bundled plugins from the platformBundledPlugins property
@@ -153,6 +169,53 @@ tasks {
     buildSearchableOptions {
         enabled = false
     }
+}
+
+// Fix plugin.xml issue with <n> tag by creating a custom task to modify the JAR file after build
+tasks.register("fixPluginXml") {
+    dependsOn(tasks.buildPlugin)
+    doLast {
+        val jarFile = file("${project.buildDir}/idea-sandbox/plugins/tailwind-smart-plugin/lib/instrumented-tailwind-smart-plugin-${project.property("pluginVersion")}.jar")
+        if (jarFile.exists()) {
+            println("Fixing plugin.xml in ${jarFile.absolutePath}")
+            val tempDir = file("${project.buildDir}/tmp/fixPluginXml")
+            tempDir.deleteRecursively()
+            tempDir.mkdirs()
+            
+            // Extract JAR contents
+            exec {
+                workingDir = tempDir
+                commandLine = listOf("unzip", "-q", jarFile.absolutePath)
+            }
+            
+            // Fix plugin.xml
+            val pluginXml = file("${tempDir}/META-INF/plugin.xml")
+            if (pluginXml.exists()) {
+                val content = pluginXml.readText()
+                val fixedContent = content.replace("<n>Tailwind CSS Support</n>", "<name>Tailwind CSS Support</name>")
+                pluginXml.writeText(fixedContent)
+                println("Fixed plugin.xml content: ${fixedContent.contains("<name>Tailwind CSS Support</name>")}") 
+            } else {
+                println("Warning: Could not find plugin.xml in the extracted JAR!")
+            }
+            
+            // Recreate JAR
+            jarFile.delete()
+            exec {
+                workingDir = tempDir
+                commandLine = listOf("jar", "-cf", jarFile.absolutePath, ".")
+            }
+            
+            println("Plugin XML fixed successfully in ${jarFile.absolutePath}")
+        } else {
+            println("Warning: Could not find JAR file to fix at ${jarFile.absolutePath}")
+        }
+    }
+}
+
+// Make build task depend on fixPluginXml
+tasks.build {
+    finalizedBy("fixPluginXml")
 }
 
 // Configure Changelog

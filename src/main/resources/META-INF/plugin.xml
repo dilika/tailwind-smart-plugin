@@ -7,7 +7,7 @@
     <vendor url="https://ko-fi.com/dilika">dilika</vendor>
     
     <!-- Compatibility with IntelliJ Platform Products -->
-    <idea-version since-build="233" until-build="251.*"/>
+    <idea-version since-build="241" until-build="251.*"/>
     
     <description><![CDATA[
     <h1>Tailwind CSS Smart Plugin</h1>

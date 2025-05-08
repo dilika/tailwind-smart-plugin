@@ -1,0 +1,102 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+  <change-notes><![CDATA[<h2>1.2.1</h2>
+<ul>
+  <li><strong>Enhanced Relevance:</strong> Intelligently sorted suggestions based on your typing for an optimal experience</li>
+  <li><strong>Extended Coverage:</strong> Complete support for common Tailwind classes (inline-block, px-3, py-1, text-indigo-600, etc.)</li>
+  <li><strong>Optimizations:</strong> Improved performance and stability of auto-completion</li>
+  <li><strong>Expanded Compatibility:</strong> Better support for various frameworks and languages</li>
+</ul>
+
+<h2>0.0.2</h2>
+<ul>
+  <li>Extensive support for Tailwind v1–v4 utilities</li>
+  <li>Color-coded icons & improved autocompletion visuals</li>
+</ul>]]></change-notes>
+  <id>com.github.dilika.tailwindsmartplugin</id>
+  <icon>tailwind_smart_icon.svg</icon>
+  <name>Tailwind CSS Support</name>
+  <version>1.2.1</version>
+  <vendor url="https://ko-fi.com/dilika">dilika</vendor>
+  <!-- Compatibility with IntelliJ Platform Products -->
+  <idea-version since-build="233" until-build="251.*" />
+  <description><![CDATA[<h1>Tailwind CSS Smart Plugin</h1>
+<p>Elevate your Tailwind CSS development experience in IntelliJ IDEs with smart features designed for speed and precision.</p>
+
+<h2>Key Features</h2>
+<ul>
+    <li>
+        <strong>Advanced Auto-Completion:</strong>
+        <ul>
+            <li>Comprehensive suggestions for Tailwind CSS utility classes, <strong>including Tailwind v4 support</strong>.</li>
+            <li><strong>Dynamically prioritized suggestions</strong> that adapt to your typing for maximum relevance.</li>
+            <li><strong>Smart Class Group Suggestions:</strong> Access common UI patterns (buttons, alerts, cards, avatars, modals, etc.) with ready-to-use class combinations.</li>
+            <li><strong>Categorized popups</strong> with intuitive, <strong>color-coded icons</strong> for quick visual identification.</li>
+            <li>Smart detection of your project's <code>tailwind.config.js</code> for <strong>custom class support</strong> and theme values.</li>
+        </ul>
+    </li>
+    <li><strong>Automatic Project Setup:</strong> Detects your project's Tailwind configuration (<code>tailwind.config.js</code>) on startup to tailor suggestions and documentation.</li>
+</ul>
+
+<h2>Supported Languages & Frameworks</h2>
+<p>Enjoy a consistent experience across a wide range of web technologies:</p>
+<ul>
+    <li>HTML, XML</li>
+    <li>JavaScript (including JSX for React, Qwik, Solid)</li>
+    <li>TypeScript (including TSX for React, Qwik, Solid)</li>
+    <li>Vue.js (<code>.vue</code> files)</li>
+    <li>PHP (including Blade templates)</li>
+    <li>Svelte</li>
+    <li>Astro</li>
+    <li>Other template languages where class attributes are common.</li>
+</ul>
+
+<h2>✨ Fuel the Future of This Plugin</h2>
+<div style="padding: 15px; background-color: #f0f9ff; border-radius: 8px; margin: 15px 0; border-left: 4px solid #0ea5e9;">
+    <p style="font-weight: 500;">Every day you use this plugin, <strong>you save precious development time</strong>. What would you do with an <em>extra hour each week</em>?</p>
+    <p>As one of the <strong>first 150 developers</strong> to discover this tool, you have a unique opportunity to influence what features get prioritized next!</p>
+    <div style="text-align: center; margin: 15px 0;">
+        <a href="https://ko-fi.com/dilika" style="display: inline-block; background-color: #0ea5e9; color: white; font-weight: bold; padding: 10px 25px; text-decoration: none; border-radius: 6px; box-shadow: 0 2px 5px rgba(14, 165, 233, 0.2);">☕️ Support Development</a>
+    </div>
+    <p style="font-size: 0.9em;">Your contribution directly translates to:</p>
+    <ul style="font-size: 0.9em; margin-top: 5px;">
+        <li><strong>New features</strong> you'll actually use (supporters get priority feature requests)</li>
+        <li><strong>Lightning-fast updates</strong> when Tailwind releases new versions</li>
+        <li><strong>Personalized support</strong> when you need assistance</li>
+    </ul>
+    <p style="font-size: 0.85em; font-style: italic; margin-top: 10px;">"The plugin has already saved me hours of work. Supporting its development was an easy decision." – Recent Contributor</p>
+</div>]]></description>
+  <!-- Product and plugin compatibility requirements -->
+  <buyUrl>https://ko-fi.com/dilika</buyUrl>
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.lang</depends>
+  <!-- Extension points defined by the plugin -->
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Services -->
+    <projectService serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigService" />
+    <!-- Auto-completion for Tailwind CSS classes -->
+    <completion.contributor language="any" implementationClass="com.github.dilika.tailwindsmartplugin.completion.TailwindCompletionContributor" />
+    <!-- Documentation Provider for Tailwind CSS classes -->
+    <lang.documentationProvider language="any" implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider" />
+    <!-- Project startup activity -->
+    <postStartupActivity implementation="com.github.dilika.tailwindsmartplugin.startup.TailwindStartupActivity" />
+    <!-- Folding pour les attributs Tailwind CSS class/className -->
+    <lang.foldingBuilder language="XML" implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder" />
+    <lang.foldingBuilder language="JavaScript" implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder" />
+    <lang.foldingBuilder language="TypeScript" implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder" />
+    <lang.foldingBuilder language="HTML" implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder" />
+    <lang.foldingBuilder language="Vue" implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder" />
+    <!-- Click listener extension -->
+    <editorFactoryListener implementation="com.github.dilika.tailwindsmartplugin.listeners.TailwindFoldingClickListener" />
+  </extensions>
+  <!-- Remove the problematic application listener -->
+  <!-- 
+    <applicationListeners>
+        <listener class="com.github.dilika.tailwindsmartplugin.listeners.TailwindProjectListener"
+                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
+    </applicationListeners>
+    -->
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+</idea-plugin>
