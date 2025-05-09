@@ -205,12 +205,43 @@ object TailwindCategoryUtils {
         }
         
         // Match standard patterns like bg-red-500, text-blue-700, border-green-300
-        val standardRegex = Regex("(bg|text|border|ring|shadow|divide|outline|accent|caret|fill|stroke)-([a-z0-9-]+)-(\\d{2,3})")
+        val standardRegex = Regex("(bg|text|border|ring|shadow|divide|outline|accent|caret|fill|stroke)-([a-z]+)-(\\d{2,3})")
         val standardMatch = standardRegex.find(colorPart)
         
         if (standardMatch != null) {
             val colorKey = "${standardMatch.groupValues[2]}-${standardMatch.groupValues[3]}"
             tailwindColors[colorKey]?.let { rgb ->
+                return createJBColorFromHex(rgb)
+            }
+        }
+        
+        // Try to extract specific color names from classes like from-primary, to-white, etc.
+        val gradientColorRegex = Regex("(from|to|via)-([a-z]+)(/\\d+)?$")
+        val gradientMatch = gradientColorRegex.find(colorPart)
+        if (gradientMatch != null) {
+            val colorName = gradientMatch.groupValues[2]
+            // Try standard colors first
+            val standardColor = when (colorName) {
+                "white" -> 0xFFFFFF
+                "black" -> 0x000000
+                "primary" -> 0x3B82F6 // Default to blue-500 for primary
+                "secondary" -> 0x6B7280 // Default to gray-500 for secondary
+                "red" -> 0xEF4444 // red-500
+                "blue" -> 0x3B82F6 // blue-500
+                "green" -> 0x22C55E // green-500
+                "yellow" -> 0xF59E0B // yellow-500
+                "purple" -> 0x8B5CF6 // purple-500
+                "pink" -> 0xEC4899 // pink-500
+                else -> null
+            }
+            
+            if (standardColor != null) {
+                return createJBColorFromHex(standardColor)
+            }
+            
+            // Try with default shade of 500
+            val defaultShade = "$colorName-500"
+            tailwindColors[defaultShade]?.let { rgb ->
                 return createJBColorFromHex(rgb)
             }
         }

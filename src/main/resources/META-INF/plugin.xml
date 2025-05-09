@@ -59,6 +59,12 @@
         <projectService
                 serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigService"/>
         
+        <!-- Register our action registrar service - commented out as the class does not exist -->
+        <!-- 
+        <applicationService
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.actions.FoldTailwindClassesActionRegistrar"/>
+        -->
+        
         <!-- Auto-completion for Tailwind CSS classes -->
         <completion.contributor
                 language="any"
@@ -72,6 +78,10 @@
         <!-- Project startup activity -->
         <postStartupActivity
                 implementation="com.github.dilika.tailwindsmartplugin.startup.TailwindStartupActivity"/>
+        
+        <!-- Register keyboard shortcuts startup activity -->
+        <postStartupActivity
+                implementation="com.github.dilika.tailwindsmartplugin.startup.TailwindKeyboardShortcutRegistrar"/>
                 
         <!-- Folding pour les attributs Tailwind CSS class/className -->
         <lang.foldingBuilder 
@@ -84,11 +94,30 @@
                 language="TypeScript"
                 implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
         <lang.foldingBuilder 
+                language="JSX Harmony"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="TypeScript JSX"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
                 language="HTML"
                 implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
         <lang.foldingBuilder 
                 language="Vue"
                 implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="Svelte"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="Blade"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="PHP"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <!-- Standalone folding service -->
+        <applicationService 
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.folding.TailwindFoldingService"/>
+        
         <!-- Click listener extension -->
         <editorFactoryListener implementation="com.github.dilika.tailwindsmartplugin.listeners.TailwindFoldingClickListener"/>
     </extensions>
@@ -102,14 +131,48 @@
     -->
 
     <actions>
-        <!-- Add your actions here -->
-        <action id="com.github.dilika.tailwindsmartplugin.actions.SortTailwindClasses"
-                class="com.github.dilika.tailwindsmartplugin.actions.SortTailwindClassesAction"
+        <!-- Simple Tailwind Sort Action -->
+        <action id="TailwindPlugin.Sort"
+                class="com.github.dilika.tailwindsmartplugin.actions.WebStormTailwindActions"
                 text="Sort Tailwind CSS Classes"
-                description="Sort Tailwind CSS classes according to a logical order for better readability">
-            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-            <add-to-group group-id="GenerateGroup" anchor="last"/>
-            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt T"/>
+                description="Sort Tailwind CSS classes in the current file.">
+            <!-- Make it accessible from multiple menus -->
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift F7"/>
+        </action>
+        
+        <!-- Tailwind Class Folding Action -->
+        <action id="TailwindPlugin.Fold"
+                class="com.github.dilika.tailwindsmartplugin.actions.SimpleFoldAction"
+                text="Fold Tailwind Classes"
+                description="Fold all Tailwind CSS classes in the current file">
+            <!-- Make it accessible from multiple menus -->
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <add-to-group group-id="FoldingGroup" anchor="first"/>
+            <!-- Universal shortcut for all platforms -->
+            <keyboard-shortcut keymap="$default" first-keystroke="alt F"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt F"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="alt F"/>
+        </action>
+        
+        <!-- Tailwind Class Unfolding Action -->
+        <action id="TailwindPlugin.Unfold"
+                class="com.github.dilika.tailwindsmartplugin.actions.UnfoldAction"
+                text="Unfold Tailwind Classes"
+                description="Unfold all Tailwind CSS classes in the current file">
+            <!-- Make it accessible from multiple menus -->
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <add-to-group group-id="FoldingGroup" anchor="first"/>
+            <!-- Universal shortcut for all platforms -->
+            <keyboard-shortcut keymap="$default" first-keystroke="alt U"/>
+            <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt U"/>
+            <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="alt U"/>
         </action>
     </actions>
 </idea-plugin>
