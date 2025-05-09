@@ -7,7 +7,7 @@ json = "20231013"
 # Gradle plugin versions
 changelog = "2.2.0"
 gradleIntelliJPlugin = "1.16.1"
-kotlin = "1.9.22"
+kotlin = "2.1.20"
 kover = "0.7.5"
 qodana = "2023.3.1"
 
