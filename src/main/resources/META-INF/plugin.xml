@@ -3,7 +3,7 @@
     <id>com.github.dilika.tailwindsmartplugin</id>
     <icon>tailwind_smart_icon.svg</icon>
     <name>Tailwind CSS Support</name>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <vendor url="https://ko-fi.com/dilika">dilika</vendor>
     
     <!-- Compatibility with IntelliJ Platform Products -->
@@ -103,5 +103,13 @@
 
     <actions>
         <!-- Add your actions here -->
+        <action id="com.github.dilika.tailwindsmartplugin.actions.SortTailwindClasses"
+                class="com.github.dilika.tailwindsmartplugin.actions.SortTailwindClassesAction"
+                text="Sort Tailwind CSS Classes"
+                description="Sort Tailwind CSS classes according to a logical order for better readability">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="GenerateGroup" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt T"/>
+        </action>
     </actions>
 </idea-plugin>

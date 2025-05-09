@@ -99,7 +99,25 @@ object TailwindCategoryUtils {
         "bottom-" to Category.POSITION,
         "left-" to Category.POSITION,
         "inset-" to Category.POSITION,
-        "z-" to Category.POSITION
+        "z-" to Category.POSITION,
+        // New prefixes for v1–v4 expansions
+        "ring" to Category.EFFECTS,
+        "ring-" to Category.EFFECTS,
+        "divide" to Category.BORDER,
+        "divide-" to Category.BORDER,
+        "outline" to Category.EFFECTS,
+        "outline-" to Category.EFFECTS,
+        "placeholder-" to Category.TYPOGRAPHY,
+        "mix-blend-" to Category.EFFECTS,
+        "bg-gradient-" to Category.BACKGROUND,
+        "from-" to Category.BACKGROUND,
+        "to-" to Category.BACKGROUND,
+        // Accent and caret color utilities
+        "accent-" to Category.INTERACTIVITY,
+        "caret-" to Category.INTERACTIVITY,
+        // Container and container query utilities
+        "container-query" to Category.LAYOUT,
+        "@container" to Category.LAYOUT
     )
 
     // Extended Tailwind color palette
@@ -117,7 +135,7 @@ object TailwindCategoryUtils {
         "gray-50" to 0xF9FAFB, "gray-100" to 0xF3F4F6, "gray-200" to 0xE5E7EB, "gray-300" to 0xD1D5DB, "gray-400" to 0x9CA3AF,
         "gray-500" to 0x6B7280, "gray-600" to 0x4B5563, "gray-700" to 0x374151, "gray-800" to 0x1F2937, "gray-900" to 0x111827,
         // Yellow
-        "yellow-50" to 0xFFFBEB, "yellow-100" to 0xFEF3C7, "yellow-200" to 0xFDE68A, "yellow-300" to 0xFCD34D, "yellow-400" to 0xFBBF24,
+        "yellow-50" to 0xFFFBEB, "yellow-100" to 0xFEF3C7, "yellow-200" to 0xFDE68A, "yellow-300" to 0xFCD34D, "yellow-400" to 0xFB923C,
         "yellow-500" to 0xF59E0B, "yellow-600" to 0xD97706, "yellow-700" to 0xB45309, "yellow-800" to 0x92400E, "yellow-900" to 0x78350F,
         // Indigo
         "indigo-50" to 0xEEF2FF, "indigo-100" to 0xE0E7FF, "indigo-200" to 0xC7D2FE, "indigo-300" to 0xA5B4FC, "indigo-400" to 0x818CF8,
@@ -150,20 +168,20 @@ object TailwindCategoryUtils {
     )
     
     private fun extractTailwindColor(className: String): JBColor? {
-        // Check direct mapping first
-        val directMatch = directColorMapping[className] 
-        if (directMatch != null) {
-            // Direct match found
-            return createJBColorFromHex(directMatch)
-        }
-        
         // Remove variants (hover:, focus:, etc.)
         val base = className.split(":").last()
         // Remove opacity/alpha (e.g. bg-red-500/50)
         val colorPart = base.substringBefore("/")
         
+        // Check direct mapping first (exact matches like bg-white, text-black)
+        val directMatch = directColorMapping[colorPart] 
+        if (directMatch != null) {
+            // Direct match found
+            return createJBColorFromHex(directMatch)
+        }
+        
         // Handle common colors with explicit short names (bg-red, text-blue, etc.)
-        val basicColorRegex = Regex("(bg|text|border)-([a-z]+)$")
+        val basicColorRegex = Regex("(bg|text|border|ring|shadow|divide|outline|accent|caret|fill|stroke)-([a-z]+)$")
         if (colorPart.matches(basicColorRegex)) {
             val parts = colorPart.split("-")
             if (parts.size >= 2) {
@@ -178,11 +196,16 @@ object TailwindCategoryUtils {
                 tailwindColors[alternateShade]?.let { rgb ->
                     return createJBColorFromHex(rgb)
                 }
+                // Try with 400 as another fallback
+                val fallbackShade = "$colorName-400"
+                tailwindColors[fallbackShade]?.let { rgb ->
+                    return createJBColorFromHex(rgb)
+                }
             }
         }
         
         // Match standard patterns like bg-red-500, text-blue-700, border-green-300
-        val standardRegex = Regex("(bg|text|border)-([a-z0-9-]+)-(\\d{2,3})")
+        val standardRegex = Regex("(bg|text|border|ring|shadow|divide|outline|accent|caret|fill|stroke)-([a-z0-9-]+)-(\\d{2,3})")
         val standardMatch = standardRegex.find(colorPart)
         
         if (standardMatch != null) {
@@ -193,7 +216,7 @@ object TailwindCategoryUtils {
         }
         
         // Try to find the closest match by looking at the base color name if available
-        val anyColorRegex = Regex("(bg|text|border)-([a-z0-9-]+)")
+        val anyColorRegex = Regex("(bg|text|border|ring|shadow|divide|outline|accent|caret|fill|stroke)-([a-z0-9-]+)")
         val anyMatch = anyColorRegex.find(colorPart) 
         if (anyMatch != null && anyMatch.groupValues.size > 2) {
             val typeAndColor = anyMatch.groupValues[2]
@@ -202,6 +225,16 @@ object TailwindCategoryUtils {
                 key.startsWith(typeAndColor)
             }
             matchingColor?.let { (_, rgb) ->
+                return createJBColorFromHex(rgb)
+            }
+        }
+        
+        // Also handle color-specific utilities without prefix like red-500, blue-300, etc.
+        val colorOnlyRegex = Regex("([a-z]+)-(\\d{2,3})$")
+        val colorOnlyMatch = colorOnlyRegex.find(colorPart)
+        if (colorOnlyMatch != null) {
+            val colorKey = colorPart // e.g. "red-500"
+            tailwindColors[colorKey]?.let { rgb ->
                 return createJBColorFromHex(rgb)
             }
         }

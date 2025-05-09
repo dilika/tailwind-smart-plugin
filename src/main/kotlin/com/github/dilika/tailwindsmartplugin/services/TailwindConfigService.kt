@@ -100,12 +100,19 @@ class TailwindConfigService(private val project: Project) {
                 if (packageJsonFile.exists()) {
                     detectTailwindVersionFromPackageJson(packageJsonFile)
                 }
-                
-                logger.info("No Tailwind config found in project root, will use default settings for version: $tailwindVersion")
             }
         } catch (e: Exception) {
             logger.error("Error detecting Tailwind config: ${e.message}")
         }
+        // Fallback to CLI-based detection
+        try {
+            val cliVer = detectTailwindCLIVersion()
+            if (cliVer.isNotBlank()) {
+                tailwindVersion = cliVer
+                logger.info("Detected Tailwind version from CLI: $tailwindVersion")
+            }
+        } catch (_: Exception) {}
+        logger.info("Using Tailwind version: $tailwindVersion")
     }
     
     /**
@@ -249,5 +256,31 @@ class TailwindConfigService(private val project: Project) {
      */
     private fun generateTailwindClassData(): Map<String, JSONObject> {
         return emptyMap() // Will be implemented in TailwindClassGenerator
+    }
+    
+    /**
+     * Fallback to bundled config per version
+     */
+    private fun getBundledFallbackConfigPath(): String? {
+        val verKey = tailwindVersion.substringBefore('.') // e.g. "v3"
+        val resourceName = "tailwind.config.fallback.${verKey}.js"
+        val resource = this::class.java.classLoader.getResource(resourceName)
+        if (resource != null) return resource.path
+        // fallback generic
+        return this::class.java.classLoader.getResource("tailwind.config.fallback.js")?.path
+    }
+    
+    /**
+     * Detect Tailwind CLI version via npx
+     */
+    private fun detectTailwindCLIVersion(): String {
+        val proc = ProcessBuilder("npx", "tailwindcss", "--version")
+            .redirectErrorStream(true)
+            .start()
+        val output = proc.inputStream.bufferedReader().readText().trim()
+        proc.waitFor()
+        // parse major version
+        val m = """(\d+)\.(\d+)""".toRegex().find(output)
+        return if (m != null) "v${m.groupValues[1]}.0" else ""
     }
 }

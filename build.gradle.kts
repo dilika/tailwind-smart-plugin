@@ -30,38 +30,24 @@ dependencies {
 
 // IntelliJ Plugin configuration
 intellij {
-    // Allow overriding version and type from command line
-    // Use: ./gradlew runIde -PideaVersion=2024.1 -PideaType=IU
-    val ideaVersion = if (project.hasProperty("ideaVersion")) {
-        project.property("ideaVersion").toString()
-    } else {
-        project.property("platformVersion").toString()
-    }
-    
-    val ideaType = if (project.hasProperty("ideaType")) {
-        project.property("ideaType").toString()
-    } else {
-        project.property("platformType").toString()
-    }
-    
-    println("Building plugin for IntelliJ IDEA $ideaType-$ideaVersion")
-    
-    version.set(ideaVersion)
-    type.set(ideaType)
+    // Configure IntelliJ IDEA version and type
+    version.set(project.findProperty("ideaVersion")?.toString()
+        ?: project.property("platformVersion").toString())
+    type.set(project.findProperty("ideaType")?.toString()
+        ?: project.property("platformType").toString())
     updateSinceUntilBuild.set(true)
-    
-    // Only include bundled plugins from the platformBundledPlugins property
-    val bundledPlugins = project.property("platformBundledPlugins").toString()
-    
-    if (bundledPlugins.isNotEmpty()) {
-        plugins.set(bundledPlugins.split(',').filter { it.isNotEmpty() })
-    } else {
-        plugins.set(emptyList())
-    }
+    // Always include Kotlin plugin to satisfy Kotlin-based code
+    val bundled = project.property("platformBundledPlugins").toString()
+        .split(',').filter { it.isNotEmpty() }
+    plugins.set((bundled + "Kotlin").distinct())
 }
 
 // Configure Gradle tasks
 tasks {
+    // Exclude backup plugin descriptor
+    processResources {
+        exclude("META-INF/plugin.xml.bak")
+    }
     // Patch plugin.xml
     patchPluginXml {
         sinceBuild.set(project.property("pluginSinceBuild").toString())

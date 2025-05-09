@@ -3,10 +3,6 @@ package com.github.dilika.tailwindsmartplugin.listeners
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.event.EditorFactoryEvent
-import com.intellij.openapi.editor.event.EditorFactoryListener
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbService
@@ -19,19 +15,21 @@ import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.Alarm
 import java.util.regex.Pattern
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 
 /**
  * Listener that attaches to each new editor to automatically fold
  * Tailwind CSS class and className attributes.
  * This listener helps ensure folding is applied correctly, especially after indexing.
  */
-class TailwindEditorListener : EditorFactoryListener {
+class TailwindEditorListener : com.intellij.openapi.editor.event.EditorFactoryListener {
     private val logger = Logger.getInstance(TailwindEditorListener::class.java)
     
     // Pattern to identify class and className attributes in text content
     private val classAttributePattern = Pattern.compile("(class|className)\\s*=\\s*['\"]([^'\"]*)['\"]")
 
-    override fun editorCreated(event: EditorFactoryEvent) {
+    override fun editorCreated(event: com.intellij.openapi.editor.event.EditorFactoryEvent) {
         val editor = event.editor
         val project = editor.project ?: return
         logger.debug("TailwindEditorListener: editorCreated for project ${project.name}")
@@ -59,6 +57,20 @@ class TailwindEditorListener : EditorFactoryListener {
                 }, ModalityState.defaultModalityState())
             }
         }, 3000) // Delay of 3000ms
+        
+        // Register a DocumentListener to reapply folding after large document changes (e.g., reformat)
+        editor.document.addDocumentListener(object : DocumentListener {
+            private val foldAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, project)
+            override fun documentChanged(event: DocumentEvent) {
+                // Debounce to avoid running on every keystroke. Any document change resets the timer.
+                foldAlarm.cancelAllRequests()
+                foldAlarm.addRequest({
+                    if (!editor.isDisposed) {
+                        applyTailwindFolding(editor, project)
+                    }
+                }, 800) // Reapply folding 800ms after the last change
+            }
+        })
     }
     
     /**

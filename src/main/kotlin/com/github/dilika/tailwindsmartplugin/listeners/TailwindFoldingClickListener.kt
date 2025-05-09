@@ -23,17 +23,30 @@ class TailwindFoldingClickListener : EditorFactoryListener {
                     val offset = editor.logicalPositionToOffset(logical)
                     val model = editor.foldingModel as FoldingModelEx
                     
-                    // Find the fold region at the click position
-                    val foldRegion = model.getFoldingPlaceholderAt(point)?.let { placeholder ->
-                        model.allFoldRegions.find { region -> region.placeholderText == placeholder.toString() && offset >= region.startOffset && offset <= region.endOffset }
+                    // Find the fold region at the click offset with improved logic
+                    // First check for exact matches, then expand search area if needed
+                    var foldRegion = model.allFoldRegions.find { region -> 
+                        region.startOffset <= offset && offset <= region.endOffset && 
+                        region.group?.toString()?.startsWith("tailwind-classes") == true
+                    }
+                    
+                    // If no region found, try to look for nearby regions (within 5 characters)
+                    if (foldRegion == null) {
+                        // Try a slightly wider range to make clicking easier
+                        val rangeStart = Math.max(0, offset - 5)
+                        val rangeEnd = Math.min(editor.document.textLength, offset + 5)
+                        
+                        foldRegion = model.allFoldRegions.find { region ->
+                            ((region.startOffset <= rangeEnd && region.startOffset >= rangeStart) ||
+                             (region.endOffset <= rangeEnd && region.endOffset >= rangeStart) ||
+                             (region.startOffset <= rangeStart && region.endOffset >= rangeEnd)) &&
+                            region.group?.toString()?.startsWith("tailwind-classes") == true
+                        }
                     }
 
                     foldRegion?.let {
-                        // Check group name to ensure it's a Tailwind class fold
-                        if (it.group?.toString()?.startsWith("tailwind-classes") == true) {
-                            model.runBatchFoldingOperation {
-                                it.isExpanded = !it.isExpanded
-                            }
+                        model.runBatchFoldingOperation {
+                            it.isExpanded = !it.isExpanded
                         }
                     }
                 }

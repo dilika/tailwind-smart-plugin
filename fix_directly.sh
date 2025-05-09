@@ -24,10 +24,10 @@ if [ -f "$MAIN_JAR_PATH" ]; then
         echo "Creating new plugin.xml with proper name tag..."
         
         # Extract content before the invalid tag
-        CONTENT_BEFORE=$(grep -B 1000 "<n>Tailwind CSS Support</n>" "$PLUGIN_XML" | head -n -1)
+        CONTENT_BEFORE=$(grep -B 1000 "<name>Tailwind CSS Support</name>" "$PLUGIN_XML" | head -n -1)
         
         # Extract content after the invalid tag
-        CONTENT_AFTER=$(grep -A 1000 "<n>Tailwind CSS Support</n>" "$PLUGIN_XML" | tail -n +2)
+        CONTENT_AFTER=$(grep -A 1000 "<name>Tailwind CSS Support</name>" "$PLUGIN_XML" | tail -n +2)
         
         # Create new file with proper tag
         echo "$CONTENT_BEFORE" > "$PLUGIN_XML.new"

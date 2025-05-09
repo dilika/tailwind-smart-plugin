@@ -35,11 +35,11 @@ fix_jar() {
     local plugin_xml="$TEMP_DIR/META-INF/plugin.xml"
     if [ -f "$plugin_xml" ]; then
       # Check if it contains the invalid tag
-      if grep -q "<n>Tailwind CSS Support</n>" "$plugin_xml"; then
+      if grep -q "<name>Tailwind CSS Support</name>" "$plugin_xml"; then
         echo "✓ Found invalid tag, fixing..."
         
         # Replace the invalid tag
-        sed -i '' 's/<n>Tailwind CSS Support<\/n>/<name>Tailwind CSS Support<\/name>/g' "$plugin_xml"
+        sed -i '' 's/<name>Tailwind CSS Support<\/name>/<name>Tailwind CSS Support<\/name>/g' "$plugin_xml"
         
         # Verify fix
         if grep -q "<name>Tailwind CSS Support</name>" "$plugin_xml"; then
