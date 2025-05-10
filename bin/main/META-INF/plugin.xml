@@ -3,7 +3,7 @@
     <id>com.github.dilika.tailwindsmartplugin</id>
     <icon>tailwind_smart_icon.svg</icon>
     <name>Tailwind CSS Support</name>
-    <version>1.2.0</version>
+    <version>1.2.2</version>
     <vendor url="https://ko-fi.com/dilika">dilika</vendor>
     
     <!-- Compatibility with IntelliJ Platform Products -->
@@ -11,7 +11,7 @@
     
     <description><![CDATA[
     <h1>Tailwind CSS Smart Plugin</h1>
-    <p>Elevate your Tailwind CSS development experience in IntelliJ IDEs with smart features designed for speed and precision.</p>
+    <p>Elevate your Tailwind CSS development experience in IntelliJ IDEs with smart features designed for speed, precision, and enhanced readability.</p>
 
     <h2>Key Features</h2>
     <ul>
@@ -25,7 +25,26 @@
                 <li>Smart detection of your project's <code>tailwind.config.js</code> for <strong>custom class support</strong> and theme values.</li>
             </ul>
         </li>
+        <li>
+            <strong>Class Management & Organization:</strong>
+            <ul>
+                <li><strong>Smart Class Sorting:</strong> Organize Tailwind classes in a logical order based on property relationships.</li>
+                <li><strong>File-wide Class Sorting:</strong> Sort all Tailwind classes throughout an entire file with a single shortcut.</li>
+                <li><strong>Class Folding:</strong> Collapse long class lists to improve readability of your templates and components.</li>
+                <li><strong>One-click Folding/Unfolding:</strong> Toggle, fold, or unfold all Tailwind classes across an entire file.</li>
+                <li><strong>Keyboard Shortcuts:</strong> Dedicated shortcuts for all operations (sorting, folding, unfolding).</li>
+            </ul>
+        </li>
         <li><strong>Automatic Project Setup:</strong> Detects your project's Tailwind configuration (<code>tailwind.config.js</code>) on startup to tailor suggestions and documentation.</li>
+    </ul>
+
+    <h2>Keyboard Shortcuts</h2>
+    <ul>
+        <li><strong>Shift+F7:</strong> Sort selected Tailwind classes</li>
+        <li><strong>Shift+Alt+F7:</strong> Sort all Tailwind classes in the file</li>
+        <li><strong>Shift+F8:</strong> Toggle folding for Tailwind classes at cursor</li>
+        <li><strong>Shift+Alt+F8:</strong> Fold all Tailwind classes in the file</li>
+        <li><strong>Shift+Ctrl+F8:</strong> Unfold all Tailwind classes in the file</li>
     </ul>
 
     <h2>Supported Languages & Frameworks</h2>
@@ -47,6 +66,36 @@
         large—directly funds new features, refinements, and long-term maintenance. Thank you for keeping the
         innovation alive!</p>
     ]]></description>
+    
+    <change-notes><![CDATA[
+    <h2>Version 1.2.2 - May 2025</h2>
+    <ul>
+        <li>
+            <strong>New Class Management Features:</strong>
+            <ul>
+                <li>✨ <strong>File-wide Class Sorting:</strong> New command to sort all Tailwind classes in a file in one action (Shift+Alt+F7)</li>
+                <li>✨ <strong>Global Folding and Unfolding:</strong> New actions to fold (Shift+Alt+F8) or unfold (Shift+Ctrl+F8) all Tailwind class lists in a file</li>
+                <li>✅ Created a dedicated menu grouping all Tailwind functionality</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Completion Improvements:</strong>
+            <ul>
+                <li>✅ Improved accuracy for color extraction from Tailwind classes</li>
+                <li>✅ Added support for Tailwind v4 with correct color icons for all classes</li>
+                <li>✅ Performance optimization to prevent IDE slowdowns</li>
+            </ul>
+        </li>
+        <li>
+            <strong>Bug Fixes:</strong>
+            <ul>
+                <li>🐛 Fixed issues with class sorting not working properly</li>
+                <li>🐛 Resolved problems with incorrect color icons for certain classes</li>
+                <li>🐛 Fixed build errors related to JBColor values</li>
+            </ul>
+        </li>
+    </ul>
+    ]]></change-notes>
 
     <!-- Product and plugin compatibility requirements -->
     <buyUrl>https://ko-fi.com/dilika</buyUrl>
@@ -58,6 +107,12 @@
         <!-- Services -->
         <projectService
                 serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigService"/>
+        
+        <!-- Register our action registrar service - commented out as the class does not exist -->
+        <!-- 
+        <applicationService
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.actions.FoldTailwindClassesActionRegistrar"/>
+        -->
         
         <!-- Auto-completion for Tailwind CSS classes -->
         <completion.contributor
@@ -72,6 +127,10 @@
         <!-- Project startup activity -->
         <postStartupActivity
                 implementation="com.github.dilika.tailwindsmartplugin.startup.TailwindStartupActivity"/>
+        
+        <!-- Register keyboard shortcuts startup activity -->
+        <postStartupActivity
+                implementation="com.github.dilika.tailwindsmartplugin.startup.TailwindKeyboardShortcutRegistrar"/>
                 
         <!-- Folding pour les attributs Tailwind CSS class/className -->
         <lang.foldingBuilder 
@@ -84,11 +143,30 @@
                 language="TypeScript"
                 implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
         <lang.foldingBuilder 
+                language="JSX Harmony"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="TypeScript JSX"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
                 language="HTML"
                 implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
         <lang.foldingBuilder 
                 language="Vue"
                 implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="Svelte"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="Blade"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <lang.foldingBuilder 
+                language="PHP"
+                implementationClass="com.github.dilika.tailwindsmartplugin.folding.TailwindClassFoldingBuilder"/>
+        <!-- Standalone folding service -->
+        <applicationService 
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.folding.TailwindFoldingService"/>
+        
         <!-- Click listener extension -->
         <editorFactoryListener implementation="com.github.dilika.tailwindsmartplugin.listeners.TailwindFoldingClickListener"/>
     </extensions>
@@ -102,6 +180,66 @@
     -->
 
     <actions>
-        <!-- Add your actions here -->
+        <!-- Group for all Tailwind actions -->
+        <group id="TailwindPlugin.Group" text="Tailwind CSS" description="Tailwind CSS tools and utilities" popup="true" icon="/icons/tailwind.svg">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+            <add-to-group group-id="MainMenu" anchor="last"/>
+            <add-to-group group-id="GenerateGroup" anchor="last"/>
+            <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+        </group>
+        
+        <!-- Individual Class Sorting Action -->
+        <action id="TailwindPlugin.Sort"
+                class="com.github.dilika.tailwindsmartplugin.actions.SortTailwindClassesAction"
+                text="Sort Selected Tailwind Classes"
+                description="Sort Tailwind CSS classes at the cursor position or in the current selection."
+                icon="/icons/tailwind.svg">
+            <add-to-group group-id="TailwindPlugin.Group" anchor="first"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift F7"/>
+        </action>
+        
+        <!-- Sort All Classes in File -->
+        <action id="TailwindPlugin.SortAllClasses"
+                class="com.github.dilika.tailwindsmartplugin.actions.SortAllTailwindClassesAction"
+                text="Sort All Tailwind Classes in File"
+                description="Find and sort all Tailwind CSS classes throughout the entire file."
+                icon="/icons/tailwind.svg">
+            <add-to-group group-id="TailwindPlugin.Group" anchor="after" relative-to-action="TailwindPlugin.Sort"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift alt F7"/>
+        </action>
+        
+        <!-- Individual Class Folding Action -->
+        <action id="TailwindPlugin.Fold"
+                class="com.github.dilika.tailwindsmartplugin.actions.SimpleFoldAction"
+                text="Toggle Tailwind Class Folding"
+                description="Toggle folding for Tailwind CSS classes at the cursor position">
+            <add-to-group group-id="TailwindPlugin.Group" anchor="after" relative-to-action="TailwindPlugin.SortAllClasses"/>
+            <add-to-group group-id="FoldingGroup" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift F8"/>
+        </action>
+        
+        <!-- Fold All Classes in File -->
+        <action id="TailwindPlugin.FoldAll"
+                class="com.github.dilika.tailwindsmartplugin.actions.FoldAllTailwindClassesAction"
+                text="Fold All Tailwind Classes in File"
+                description="Find and fold all Tailwind CSS classes throughout the entire file.">
+            <add-to-group group-id="TailwindPlugin.Group" anchor="after" relative-to-action="TailwindPlugin.Fold"/>
+            <add-to-group group-id="FoldingGroup" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift alt F8"/>
+        </action>
+        
+        <!-- Unfold All Classes in File -->
+        <action id="TailwindPlugin.UnfoldAll"
+                class="com.github.dilika.tailwindsmartplugin.actions.UnfoldAllTailwindClassesAction"
+                text="Unfold All Tailwind Classes in File"
+                description="Find and unfold all Tailwind CSS classes throughout the entire file.">
+            <add-to-group group-id="TailwindPlugin.Group" anchor="after" relative-to-action="TailwindPlugin.FoldAll"/>
+            <add-to-group group-id="FoldingGroup" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl F8"/>
+        </action>
+        
+        <!-- End of Tailwind actions -->
     </actions>
 </idea-plugin>

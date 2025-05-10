@@ -223,18 +223,16 @@ class TailwindClassGenerator(
      * Returns a static list of core Tailwind classes for fallback.
      * This should be updated as Tailwind releases new versions.
      */
-    private fun getDefaultTailwindCoreClasses(): List<String> = listOf(
-        "container", "mx-auto", "my-0", "p-0", "p-1", "p-2", "p-3", "p-4",
-        "m-0", "m-1", "m-2", "m-3", "m-4", "text-xs", "text-sm", "text-base", "text-lg", "text-xl",
-        "font-bold", "font-medium", "font-light", "bg-white", "bg-black", "bg-gray-100", "bg-gray-900",
-        "border", "border-0", "border-2", "border-4", "rounded", "rounded-sm", "rounded-lg",
-        "flex", "flex-row", "flex-col", "grid", "grid-cols-1", "grid-cols-2", "grid-cols-3",
-        "w-full", "h-full", "w-1/2", "h-1/2", "w-1/3", "h-1/3", "w-1/4", "h-1/4",
-        "absolute", "relative", "fixed", "sticky", "top-0", "right-0", "bottom-0", "left-0",
-        "shadow", "shadow-md", "shadow-lg", "transition", "duration-100", "duration-200", "duration-300",
-        "hover:bg-gray-100", "hover:bg-gray-900", "hover:text-white", "focus:outline-none"
-        // ...add more as needed
-    )
+    private fun getDefaultTailwindCoreClasses(): List<String> {
+        // Load static fallback classes from bundled JSON
+        val resource = this::class.java.classLoader.getResource("tailwind-classes.json")
+        if (resource != null) {
+            val text = resource.openStream().bufferedReader().use { it.readText() }
+            val json = org.json.JSONArray(text)
+            return (0 until json.length()).map { json.getString(it) }
+        }
+        return emptyList()
+    }
 
     /**
      * Generate Tailwind v4 specific classes

@@ -1,140 +1,203 @@
 package com.github.dilika.tailwindsmartplugin.folding
 
 import com.intellij.lang.ASTNode
+import com.intellij.lang.Language
 import com.intellij.lang.folding.FoldingBuilderEx
 import com.intellij.lang.folding.FoldingDescriptor
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.FoldingGroup
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import java.util.regex.Pattern
-import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.openapi.diagnostic.Logger
 
 /**
- * Folding builder for Tailwind CSS class/className attributes.
- * Provides folding functionality to hide long lists of Tailwind classes.
+ * Folding builder for Tailwind CSS classes.
+ * Identifies class and className attributes in HTML, JSX, and other files
+ * and creates folding regions for these attributes.
  */
-class TailwindClassFoldingBuilder : FoldingBuilderEx(), DumbAware {
+class TailwindClassFoldingBuilder : FoldingBuilderEx() {
     private val logger = Logger.getInstance(TailwindClassFoldingBuilder::class.java)
-
-    // Pattern to identify class and className attributes in JSX and other formats
-    private val classAttributePattern = Pattern.compile("(class|className)\\s*=\\s*['\"]([^'\"]*)['\"]")
+    private val TAILWIND_GROUP_ID = "tailwind-classes"
+    
+    // Minimum length of class attribute value to be folded
+    private val MIN_FOLD_LENGTH = 15
 
     override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
+        if (root !is PsiFile) {
+            return emptyArray()
+        }
+
         val descriptors = mutableListOf<FoldingDescriptor>()
-        logger.debug("BuildFoldRegions for root: ${root.textRange}")
-        // Fold XML/HTML attributes
-        processXmlAttributes(root, descriptors)
-        // Fold class patterns in text (JSX, TSX, etc.)
-        processTextContent(root, descriptors)
-        logger.debug("Found ${descriptors.size} folding descriptors.")
+
+        try {
+            // First check if it's HTML/XML
+            val isXmlLike = listOf("HTML", "XML", "JSX Harmony", "JavaScript").any { lang ->
+                try {
+                    root.language.displayName == lang || 
+                    root.language.isKindOf(Language.findLanguageByID(lang) ?: return@any false)
+                } catch (e: ProcessCanceledException) {
+                    // Ignore cancellation exceptions - they occur during IDE write operations
+                    return emptyArray()
+                } catch (e: Exception) {
+                    logger.debug("Exception checking language: ${e.message}")
+                    false
+                }
+            }
+
+            if (isXmlLike) {
+                processXmlAttributes(root, descriptors)
+            }
+
+            // Also check for JSX/JS files with className
+            val isJsLike = listOf("JavaScript", "TypeScript", "JSX Harmony", "TSX").any { lang ->
+                try {
+                    root.language.displayName == lang || 
+                    root.language.isKindOf(Language.findLanguageByID(lang) ?: return@any false)
+                } catch (e: ProcessCanceledException) {
+                    // Ignore cancellation exceptions - they occur during IDE write operations
+                    return emptyArray()
+                } catch (e: Exception) {
+                    logger.debug("Exception checking language: ${e.message}")
+                    false
+                }
+            }
+
+            if (isJsLike) {
+                processJsxPatterns(root, descriptors)
+            }
+        } catch (e: ProcessCanceledException) {
+            // Ignore ProcessCanceledException - it's thrown during IDE write operations
+            return emptyArray()
+        } catch (e: Exception) {
+            // Log other exceptions for debugging without re-throwing
+            logger.debug("Exception during folding region building: ${e.message}", e)
+        }
+
         return descriptors.toTypedArray()
     }
 
-    private fun processXmlAttributes(root: PsiElement, descriptors: MutableList<FoldingDescriptor>) {
-        val xmlAttributes = PsiTreeUtil.findChildrenOfType(root, XmlAttribute::class.java)
-        logger.debug("Processing ${xmlAttributes.size} XML attributes.")
-        for (attribute in xmlAttributes) {
-            if (attribute.name == "class" || attribute.name == "className") {
-                logger.debug("Found attribute: ${attribute.name} with value: ${attribute.value}")
-                attribute.valueElement?.let { valueElement ->
-                    if (valueElement.value.length > 15) { // Threshold for folding
-                        logger.debug("Attempting to add folding for: ${attribute.name}='${valueElement.value.substring(0, 15)}...'")
-                        addFoldingDescriptorForValue(valueElement, descriptors, "tailwind-classes-xml")
-                    } else {
-                        logger.debug("Skipping folding for ${attribute.name}, value too short: ${valueElement.value.length}")
+    private fun processXmlAttributes(element: PsiElement, descriptors: MutableList<FoldingDescriptor>) {
+        try {
+            // Find all XML attributes named 'class' or 'className'
+            PsiTreeUtil.processElements(element) { currentElement ->
+                if (currentElement is XmlAttribute) {
+                    val name = currentElement.name.lowercase()
+                    if ((name == "class" || name == "classname") && currentElement.value?.length ?: 0 >= MIN_FOLD_LENGTH) {
+                        val valueElement = currentElement.valueElement
+                        if (valueElement != null) {
+                            val originalRange = valueElement.textRange
+                            val value = valueElement.text
+                            
+                            // The text will have quotes, so trim those when creating the region
+                            // The first character is the opening quote, and the last character is the closing quote
+                            if (value.length >= 3) { // Minimum: 2 quotes + 1 character
+                                val adjustedRange = TextRange(
+                                    originalRange.startOffset + 1, // +1 to skip opening quote
+                                    originalRange.endOffset - 1    // -1 to skip closing quote
+                                )
+                                
+                                if (adjustedRange.length >= MIN_FOLD_LENGTH) {
+                                    val descriptor = FoldingDescriptor(
+                                        valueElement.node,
+                                        adjustedRange,
+                                        FoldingGroup.newGroup(TAILWIND_GROUP_ID),
+                                        "..."
+                                    )
+                                    descriptors.add(descriptor)
+                                    logger.debug("Added XML attribute folding descriptor for ${name}")
+                                }
+                            }
+                        }
                     }
-                } ?: logger.debug("Attribute ${attribute.name} has no valueElement.")
+                }
+                true
             }
+        } catch (e: ProcessCanceledException) {
+            // Ignore cancellation exceptions - they occur during IDE write operations
+        } catch (e: Exception) {
+            logger.debug("Exception processing XML attributes: ${e.message}", e)
         }
     }
-    
-    private fun processTextContent(root: PsiElement, descriptors: MutableList<FoldingDescriptor>) {
-        // Process all text elements that might contain class definitions
-        PsiTreeUtil.processElements(root) { element ->
-            if (element is LeafPsiElement) {
+
+    private fun processJsxPatterns(element: PsiElement, descriptors: MutableList<FoldingDescriptor>) {
+        try {
+            // Helper function to process each pattern type
+            fun processPattern(element: PsiElement, pattern: String, contentGroupIndex: Int) {
                 val text = element.text
-                val matcher = classAttributePattern.matcher(text)
+                val matcher = Pattern.compile(pattern).matcher(text)
                 
                 while (matcher.find()) {
-                    val classValue = matcher.group(2)
-                    
-                    // Don't fold short class values
-                    if (classValue.length < 15) continue
-                    
-                    // Calculate the start and end offsets for the class value
-                    val startInText = matcher.start(2)
-                    val endInText = matcher.end(2)
-                    
-                    if (startInText >= 0 && endInText > startInText) {
-                        val elementStartOffset = element.textRange.startOffset
-                        val startOffset = elementStartOffset + startInText
-                        val endOffset = elementStartOffset + endInText
+                    if (matcher.groupCount() >= contentGroupIndex) {
+                        val classContent = matcher.group(contentGroupIndex)
                         
-                        // Create a folding descriptor
-                        val group = FoldingGroup.newGroup("tailwind-classes-text")
-                        descriptors.add(
-                            FoldingDescriptor(
-                                element.node,
-                                TextRange(startOffset, endOffset),
-                                group,
-                                "..."
-                            )
-                        )
-                        logger.debug("Added folding descriptor for text value: ${classValue.substring(0, Math.min(classValue.length,15))}... Range: $startOffset-$endOffset")
+                        // Only fold if content is long enough
+                        if (classContent != null && classContent.length >= MIN_FOLD_LENGTH) {
+                            val fullMatch = matcher.group(0)
+                            val contentStart = fullMatch.indexOf(classContent)
+                            
+                            if (contentStart >= 0) {
+                                val elementStart = element.textRange.startOffset
+                                val classStart = elementStart + matcher.start() + contentStart
+                                val classEnd = classStart + classContent.length
+                                
+                                val descriptor = FoldingDescriptor(
+                                    element.node,
+                                    TextRange(classStart, classEnd),
+                                    FoldingGroup.newGroup(TAILWIND_GROUP_ID),
+                                    "..."
+                                )
+                                descriptors.add(descriptor)
+                                logger.debug("Added JSX pattern folding descriptor")
+                            }
+                        }
                     }
                 }
             }
-            true
+
+            PsiTreeUtil.processElements(element) { currentElement ->
+                // Skip XmlAttribute elements since we've already processed them
+                if (currentElement !is XmlAttribute && currentElement !is XmlAttributeValue && currentElement.textLength >= MIN_FOLD_LENGTH) {
+                    // 1. Template literals: className={`...`}
+                    processPattern(
+                        currentElement,
+                        "(class|className)\\s*=\\s*\\{\\s*`([^`]+)`\\s*\\}",
+                        2 // Group index for the class content
+                    )
+                    
+                    // 2. classNames function: className={classNames("...")}
+                    processPattern(
+                        currentElement,
+                        "(class|className)\\s*=\\s*\\{\\s*classNames\\(\\s*[\"']([^\"']+)[\"']",
+                        2 // Group index for the class content
+                    )
+                    
+                    // 3. Standard React className: className="..."
+                    processPattern(
+                        currentElement,
+                        "(class|className)\\s*=\\s*[\"']([^\"']+)[\"']",
+                        2 // Group index for the class content
+                    )
+                }
+                true
+            }
+        } catch (e: ProcessCanceledException) {
+            // Ignore cancellation exceptions - they occur during IDE write operations
+        } catch (e: Exception) {
+            logger.debug("Exception processing JSX patterns: ${e.message}", e)
         }
-    }
-    
-    // Helper to add folding descriptor for the attribute value only
-    private fun addFoldingDescriptorForValue(
-        attributeValue: XmlAttributeValue,
-        descriptors: MutableList<FoldingDescriptor>,
-        groupName: String
-    ) {
-        val valueTextRange = attributeValue.valueTextRange
-        
-        if (valueTextRange.isEmpty) {
-            logger.debug("Skipping folding, valueTextRange is empty for ${attributeValue.parent?.text}")
-            return
-        }
-        
-        val group = FoldingGroup.newGroup(groupName)
-        descriptors.add(
-            FoldingDescriptor(
-                attributeValue.node,
-                valueTextRange,
-                group,
-                "..."
-            )
-        )
-        logger.debug("Added folding descriptor for value: ${attributeValue.value.substring(0, Math.min(attributeValue.value.length,15))}... Range: $valueTextRange")
     }
 
-    override fun getPlaceholderText(node: ASTNode): String? {
-        // This method is called if FoldingDescriptor.getPlaceholderText() returns null.
-        // Since our descriptors always provide "...", this can be simplified.
-        // However, to be safe and cover different node types if logic changes:
-        val psi = node.psi
-        return when (psi) {
-            is XmlAttributeValue -> "..." // For class values in XML attributes
-            is LeafPsiElement -> "..."    // For class values in text/JSX
-            is XmlAttribute -> "${psi.name}=\"...\"" // Fallback if entire attribute were folded
-            else -> "..."
-        }
+    override fun getPlaceholderText(node: ASTNode): String {
+        return "..."
     }
 
     override fun isCollapsedByDefault(node: ASTNode): Boolean {
-        // Always return true to fold all class/className attributes when the file is opened
-        logger.debug("isCollapsedByDefault called for node: ${node.elementType}, returning true")
-        return true
+        return false
     }
 }
