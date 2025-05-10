@@ -107,7 +107,7 @@ class TailwindClassFoldingBuilder : FoldingBuilderEx() {
                                         valueElement.node,
                                         adjustedRange,
                                         FoldingGroup.newGroup(TAILWIND_GROUP_ID),
-                                        " Tailwind classes... "
+                                        "..."
                                     )
                                     descriptors.add(descriptor)
                                     logger.debug("Added XML attribute folding descriptor for ${name}")
@@ -150,7 +150,7 @@ class TailwindClassFoldingBuilder : FoldingBuilderEx() {
                                     element.node,
                                     TextRange(classStart, classEnd),
                                     FoldingGroup.newGroup(TAILWIND_GROUP_ID),
-                                    " Tailwind classes... "
+                                    "..."
                                 )
                                 descriptors.add(descriptor)
                                 logger.debug("Added JSX pattern folding descriptor")
@@ -194,7 +194,7 @@ class TailwindClassFoldingBuilder : FoldingBuilderEx() {
     }
 
     override fun getPlaceholderText(node: ASTNode): String {
-        return " Tailwind classes... "
+        return "..."
     }
 
     override fun isCollapsedByDefault(node: ASTNode): Boolean {

@@ -111,7 +111,7 @@ class TailwindFoldingService {
                                     foldingModel.createFoldRegion(
                                         startOffset,
                                         endOffset,
-                                        " Tailwind classes... ",
+                                        "...",
                                         FoldingGroup.newGroup(TAILWIND_GROUP_ID),
                                         false
                                     )
@@ -196,7 +196,7 @@ class TailwindFoldingService {
                     foldingModel.createFoldRegion(
                         startOffset,
                         endOffset,
-                        " Tailwind classes... ",
+                        "...",
                         FoldingGroup.newGroup(TAILWIND_GROUP_ID),
                         false
                     )
