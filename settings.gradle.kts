@@ -2,7 +2,7 @@ rootProject.name = "tailwind-smart-plugin"
 
 // Configure Gradle Enterprise
 plugins {
-    id("com.gradle.enterprise") version "3.16.1"
+    id("com.gradle.enterprise") version "3.19.2"
 }
 
 // Configure Gradle Enterprise Plugin
