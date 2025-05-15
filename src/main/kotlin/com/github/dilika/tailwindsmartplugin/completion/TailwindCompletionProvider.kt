@@ -8,6 +8,7 @@ import com.github.dilika.tailwindsmartplugin.util.TailwindCategoryUtils
 import com.github.dilika.tailwindsmartplugin.util.TailwindCategoryIcon
 import com.github.dilika.tailwindsmartplugin.util.SmartClassGroupUtils
 import com.github.dilika.tailwindsmartplugin.utils.ColorIcon
+import com.github.dilika.tailwindsmartplugin.utils.TailwindIconRegistry
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.completion.InsertHandler
@@ -18,12 +19,17 @@ import com.intellij.openapi.project.Project
 import com.github.dilika.tailwindsmartplugin.utils.TailwindUtils
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.JBColor
+import com.github.dilika.tailwindsmartplugin.services.TailwindConfigAnalyzer
+import com.github.dilika.tailwindsmartplugin.jit.TailwindJitSupport
 
 /**
  * Enhanced Tailwind CSS completion provider.
  * Provides intelligent code completion for all Tailwind CSS classes and variants.
  */
-class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
+class TailwindCompletionProvider(
+    private val configAnalyzer: TailwindConfigAnalyzer,
+    private val jitSupport: TailwindJitSupport
+) : CompletionProvider<CompletionParameters>() {
     private val logger = Logger.getInstance(TailwindCompletionProvider::class.java)
     
     // All Tailwind variants for responsive, state, and other modifiers
@@ -103,24 +109,94 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
         "hint-",
     )
 
-    override fun addCompletions(
-        parameters: CompletionParameters,
-        context: ProcessingContext,
-        resultSet: CompletionResultSet
-    ) {
-        val element = parameters.position
-        if (!isClassAttribute(element)) return
+    /**
+     * Extracts the current prefix at cursor position
+     */
+    private fun getCurrentPrefix(position: PsiElement): String {
+        // Get the text content of the current file
+        val fileText = position.containingFile.text
         
-        val project: Project = parameters.originalFile.project
-        val caretOffset = parameters.offset
-        val fileText = parameters.originalFile.text
+        // Get the caret offset within the file
+        val caretOffset = position.textOffset
         
-        // Extract the prefix just before the caret, supporting variants, arbitrary values, and partials
-        val prefix = extractTailwindPrefix(fileText, caretOffset)
+        // Extract the prefix at the caret position
+        return extractTailwindPrefix(fileText, caretOffset)
+    }
+    
+    /**
+     * Extracts variant prefix and base prefix from a complete prefix
+     * e.g., "hover:bg-blue" -> ("hover:", "bg-blue")
+     */
+    private fun extractVariantAndBasePrefix(prefix: String): Pair<String, String> {
+        // Handle variant prefixes (e.g. hover:, sm:, focus:)
+        val prefixParts = prefix.split(":")
+        
+        return if (prefixParts.size > 1) {
+            val variant = prefixParts.subList(0, prefixParts.size - 1).joinToString(":") + ":"
+            val base = prefixParts.last()
+            Pair(variant, base)
+        } else {
+            Pair("", prefix)
+        }
+    }
+    
+    /**
+     * Find the tailwind.config.js file in the project
+     */
+    private fun findTailwindConfigPath(project: Project): String {
+        // This is a simplified version, in practice we would scan the project directories
+        val baseDir = project.basePath ?: return ""
+        val configFile = "$baseDir/tailwind.config.js"
+        
+        return configFile
+    }
+    
+    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
+        val position = parameters.position
+        val prefix = getCurrentPrefix(position)
+        val project = parameters.originalFile.project
+        
+        // Skip if prefix is empty or doesn't look like a Tailwind class
+        if (prefix.isEmpty() || prefix.startsWith(".") || prefix.startsWith("#")) {
+            return
+        }
+        
+        // Traiter les valeurs arbitraires JIT
+        if (prefix.contains("[") && !prefix.endsWith("]")) {
+            jitSupport.processArbitraryValue(prefix, result)
+            return
+        }
+        
+        // Process the prefix to extract any variant parts (e.g., "hover:bg-" -> variant="hover:", basePrefix="bg-")
+        val prefixParts = extractVariantAndBasePrefix(prefix)
+        val variantPrefix = prefixParts.first
+        val basePrefix = prefixParts.second
+        
+        // Espace pour les suggestions contextuelles si nécessaire dans le futur
+        // Actuellement non implémenté
+        
+        // Ajouter les classes personnalisées de la configuration
+        val configPath = findTailwindConfigPath(project)
+        if (configPath.isNotEmpty()) {
+            val config = configAnalyzer.analyzeConfig(configPath)
+            val customClasses = configAnalyzer.extractCustomClasses(config)
+            
+            for (customClass in customClasses) {
+                if (customClass.startsWith(basePrefix)) {
+                    val fullClass = variantPrefix + customClass
+                    val element = LookupElementBuilder.create(fullClass as String)
+                        .withPresentableText(fullClass)
+                        .withTypeText("Custom Tailwind Class", true)
+                        .withIcon(TailwindIconRegistry.getIconForClass(customClass))
+                    
+                    result.addElement(PrioritizedLookupElement.withPriority(element, 150.0))
+                }
+            }
+        }
         
         // Special case for colon: show all available variants
         if (prefix.endsWith(":") || prefix == ":") {
-            addVariantCompletions(prefix, resultSet)
+            addVariantCompletions(prefix, result)
             return
         }
         
@@ -129,17 +205,12 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
         
         // Handle various completion triggers
         val isPrefixLongEnough = prefix.length >= minPrefixLength
-        val isCommonPrefix = commonPrefixes.any { prefix.startsWith(it, ignoreCase = true) }
+        val isCommonPrefix = commonPrefixes.any { prefix.startsWith(it.toString(), ignoreCase = true) }
         val isEmptyAfterSpace = prefix.isEmpty() || prefix.isBlank()
         val hasVariantPrefix = prefix.contains(":")
         val containsHyphen = prefix.contains("-") // Check for hyphen anywhere in the prefix
         
         if (!isPrefixLongEnough && !isCommonPrefix && !isEmptyAfterSpace && !hasVariantPrefix && !containsHyphen) return
-        
-        // Support variant prefixes (e.g. hover:, sm:, focus:)
-        val prefixParts = prefix.split(":")
-        val variantPrefix = if (prefixParts.size > 1) prefixParts.subList(0, prefixParts.size - 1).joinToString(":") + ":" else ""
-        val basePrefix = prefixParts.last()
         
         logger.debug("Processing completions for prefix: '$prefix', variant: '$variantPrefix', base: '$basePrefix'")
         
@@ -184,8 +255,9 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
             }
             .take(completionLimit) 
             .forEach { cls ->
-                val (category, color) = TailwindCategoryUtils.getCategoryAndColor(cls)
-                val icon = TailwindCategoryIcon(category, color, 14)
+                // Use the new icon registry to get appropriate icons for each class
+                val icon = TailwindIconRegistry.getIconForClass(cls, 14)
+                val (category, _) = TailwindCategoryUtils.getCategoryAndColor(cls)
                 val suggestion = variantPrefix + cls
                 
                 val element = LookupElementBuilder.create(suggestion)
@@ -200,14 +272,15 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
                 
                 val priority = 100.0 + exactMatchBonus + commonPrefixBonus + shorterBonus
                 
-                resultSet.addElement(PrioritizedLookupElement.withPriority(element, priority))
+                result.addElement(PrioritizedLookupElement.withPriority(element, priority))
             }
 
         // Smart Class Group suggestions (buttons, alerts, etc.)
         SmartClassGroupUtils.GROUPS
             .filter { it.key.startsWith(basePrefix, ignoreCase = true) }
             .forEach { group ->
-                val icon = ColorIcon(14, group.color)
+                // Use round color icons for groups for better UX
+                val icon = com.github.dilika.tailwindsmartplugin.utils.RoundColorIcon(14, group.color)
                 val element = LookupElementBuilder.create(group.classes)
                     .withLookupString(variantPrefix + group.key)
                     .withPresentableText(group.key)
@@ -218,13 +291,13 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
                         // Replace the current prefix with full class list
                         context.document.replaceString(context.startOffset, context.tailOffset, group.classes)
                     })
-                resultSet.addElement(PrioritizedLookupElement.withPriority(element, 200.0))
+                result.addElement(PrioritizedLookupElement.withPriority(element, 200.0))
             }
         
         // If the prefix appears to be a complete class and there might be need for a variant, suggest common variants
         if (prefix.isNotEmpty() && !prefix.contains(":") && !prefix.endsWith("-") && 
             !prefix.endsWith("[") && !prefix.startsWith(".") && !prefix.startsWith("#")) {
-            suggestVariantsForClass(prefix, resultSet)
+            suggestVariantsForClass(prefix, result)
         }
     }
     
@@ -292,88 +365,40 @@ class TailwindCompletionProvider : CompletionProvider<CompletionParameters>() {
 
     // Extracts the class prefix at the caret position, supporting variants, arbitrary values, and partials
     private fun extractTailwindPrefix(fileText: String, caretOffset: Int): String {
-        val beforeCaret = fileText.substring(0, caretOffset)
-        
-        // First check if we're inside an attribute value by finding the last quote/space
-        val lastQuote = beforeCaret.lastIndexOfAny(charArrayOf('"', '\'', '`'))
-        
-        // Check if we're within a quoted string
-        if (lastQuote >= 0) {
-            // Get all text after the last quote
-            val afterQuote = beforeCaret.substring(lastQuote + 1)
-            
-            // Find valid class boundaries: spaces or the beginning of the string
-            val lastSpace = afterQuote.lastIndexOf(' ')
-            
-            if (lastSpace >= 0) {
-                // Get text from last space to cursor position
-                val currentClassStart = afterQuote.substring(lastSpace + 1)
-                
-                // Look ahead to find the end of the current class (if any)
-                val textAfterCaret = if (caretOffset < fileText.length) fileText.substring(caretOffset) else ""
-                val nextSpaceOrQuote = textAfterCaret.indexOfAny(charArrayOf(' ', '"', '\'', '`'))
-                
-                // If cursor is in the middle of a class name
-                if (nextSpaceOrQuote > 0) {
-                    // Return only the portion of the class name that's before the cursor
-                    return currentClassStart
-                }
-                return currentClassStart
-            }
-            
-            // No space found, means we're at the first class after the quote
-            // Check if cursor is in the middle of the class
-            val textAfterCaret = if (caretOffset < fileText.length) fileText.substring(caretOffset) else ""
-            val nextSpaceOrQuote = textAfterCaret.indexOfAny(charArrayOf(' ', '"', '\'', '`'))
-            
-            // If cursor is in the middle of the first class
-            if (nextSpaceOrQuote > 0) {
-                return afterQuote
-            }
-            return afterQuote
+        // Find the start of the current class name
+        var startOffset = caretOffset
+        while (startOffset > 0 && !isWhitespaceOrDelimiter(fileText[startOffset - 1])) {
+            startOffset--
         }
         
-        // If we're here, no quote was found - check for space-delimited context
-        val lastSpace = beforeCaret.lastIndexOf(' ')
-        if (lastSpace >= 0) {
-            return beforeCaret.substring(lastSpace + 1)
-        }
-        
-        // Support for arbitrary values with square brackets
-        val lastOpenBracket = beforeCaret.lastIndexOf('[')
-        if (lastOpenBracket >= 0) {
-            // Check if we're inside balanced brackets
-            val afterOpenBracket = beforeCaret.substring(lastOpenBracket)
-            val closeBrackets = afterOpenBracket.count { it == ']' }
-            val openBrackets = afterOpenBracket.count { it == '[' }
-            
-            // If brackets are balanced, get everything after the last space before the open bracket
-            if (closeBrackets >= openBrackets) {
-                val beforeBracket = beforeCaret.substring(0, lastOpenBracket)
-                val lastSpaceBeforeBracket = beforeBracket.lastIndexOf(' ')
-                if (lastSpaceBeforeBracket >= 0) {
-                    return beforeCaret.substring(lastSpaceBeforeBracket + 1)
-                }
-            }
-        }
-        
-        // As a fallback, split by separators and take the last segment
-        val separators = Regex("[\\s`\"'{(]+")
-        val segments = beforeCaret.split(separators)
-        return segments.lastOrNull() ?: ""
+        // Get the text from the identified start to the caret position
+        return fileText.substring(startOffset, caretOffset)
     }
-
+    private fun isWhitespaceOrDelimiter(char: Char): Boolean {
+        return char.isWhitespace() || char == '"' || char == '\'' || char == '>' || char == '<' || char == '=' || char == '{' || char == '}'
+    }
+        
+    // isClassAttribute checks if an element is a class attribute in HTML/JSX/etc.
     private fun isClassAttribute(element: PsiElement): Boolean {
-        // Check for XML/HTML
-        val parent = (element as? XmlAttributeValue)?.parent
-            ?: element.parent
-        val name = parent?.firstChild?.text
-        if (name == "class" || name == "className") return true
-        val gpName = parent?.parent?.firstChild?.text
-        if (gpName == "class" || gpName == "className") return true
-        // Check for JS/TS/JSX/TSX: look for class or className in the context
-        val text = element.text
-        if (text.contains("class=") || text.contains("className=") || text.contains("className`")) return true
+        // Check parent elements to find the attribute name
+        var current: PsiElement? = element
+        while (current != null) {
+            // For XML-like files (HTML, JSX, Vue templates, etc.)
+            if (current is XmlAttributeValue) {
+                val attributeName = (current.parent as? com.intellij.psi.xml.XmlAttribute)?.name?.lowercase() ?: ""
+                return attributeName == "class" || attributeName == "classname"
+            }
+            
+            // Check for JS/TS/JSX/TSX: look for class or className in the context
+            val text = current.text
+            if (text.contains("class=") || text.contains("className=") || text.contains("className`")) {
+                return true
+            }
+            
+            // Move up in the hierarchy
+            current = current.parent
+        }
+        
         // Fallback: search up the tree for a className or class attribute
         var e = element.parent
         repeat(3) {

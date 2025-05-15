@@ -19,7 +19,7 @@ class SimpleFoldAction : AnAction(), DumbAware {
 
     override fun actionPerformed(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-        val project = e.project ?: return
+        e.project ?: return // Project is required but not used directly
         val psiFile = e.getData(CommonDataKeys.PSI_FILE)
 
         logger.info("Folding all Tailwind classes")

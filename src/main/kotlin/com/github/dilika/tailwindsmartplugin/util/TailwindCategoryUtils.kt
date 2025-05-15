@@ -131,6 +131,11 @@ object TailwindCategoryUtils {
         // Green
         "green-50" to 0xF0FDF4, "green-100" to 0xDCFCE7, "green-200" to 0xBBF7D0, "green-300" to 0x86EFAC, "green-400" to 0x4ADE80,
         "green-500" to 0x22C55E, "green-600" to 0x16A34A, "green-700" to 0x15803D, "green-800" to 0x166534, "green-900" to 0x14532D,
+        // Slate
+        "slate-50" to 0xF8FAFC, "slate-100" to 0xF1F5F9, "slate-200" to 0xE2E8F0, "slate-300" to 0xCBD5E1, "slate-400" to 0x94A3B8,
+        "slate-500" to 0x64748B, "slate-600" to 0x475569, "slate-700" to 0x334155, "slate-800" to 0x1E293B, "slate-900" to 0x0F172A,
+        "slate-950" to 0x020617, "slate-975" to 0x010313,
+        
         // Gray
         "gray-50" to 0xF9FAFB, "gray-100" to 0xF3F4F6, "gray-200" to 0xE5E7EB, "gray-300" to 0xD1D5DB, "gray-400" to 0x9CA3AF,
         "gray-500" to 0x6B7280, "gray-600" to 0x4B5563, "gray-700" to 0x374151, "gray-800" to 0x1F2937, "gray-900" to 0x111827,
@@ -159,12 +164,52 @@ object TailwindCategoryUtils {
 
     // Direct mapping for specific class names that don't follow the standard pattern
     private val directColorMapping = mapOf(
+        // White color mappings for all common prefixes
         "bg-white" to 0xFFFFFF,
-        "bg-black" to 0x000000,
         "text-white" to 0xFFFFFF,
-        "text-black" to 0x000000,
         "border-white" to 0xFFFFFF,
-        "border-black" to 0x000000
+        "ring-white" to 0xFFFFFF,
+        "shadow-white" to 0xFFFFFF,
+        "divide-white" to 0xFFFFFF,
+        "outline-white" to 0xFFFFFF,
+        "accent-white" to 0xFFFFFF,
+        "caret-white" to 0xFFFFFF,
+        "fill-white" to 0xFFFFFF,
+        "stroke-white" to 0xFFFFFF,
+        "from-white" to 0xFFFFFF,
+        "to-white" to 0xFFFFFF,
+        "via-white" to 0xFFFFFF,
+        "white" to 0xFFFFFF,
+        
+        // Black color mappings for all common prefixes
+        "bg-black" to 0x000000,
+        "text-black" to 0x000000,
+        "border-black" to 0x000000,
+        "ring-black" to 0x000000,
+        "shadow-black" to 0x000000,
+        "divide-black" to 0x000000,
+        "outline-black" to 0x000000,
+        "accent-black" to 0x000000,
+        "caret-black" to 0x000000,
+        "fill-black" to 0x000000,
+        "stroke-black" to 0x000000,
+        "from-black" to 0x000000,
+        "to-black" to 0x000000,
+        "via-black" to 0x000000,
+        "black" to 0x000000,
+        
+        // Transparent color mappings
+        "bg-transparent" to 0x00FFFFFF,
+        "text-transparent" to 0x00FFFFFF,
+        "border-transparent" to 0x00FFFFFF,
+        "ring-transparent" to 0x00FFFFFF,
+        "shadow-transparent" to 0x00FFFFFF,
+        "divide-transparent" to 0x00FFFFFF,
+        "outline-transparent" to 0x00FFFFFF,
+        "from-transparent" to 0x00FFFFFF,
+        "to-transparent" to 0x00FFFFFF,
+        "via-transparent" to 0x00FFFFFF,
+        "transparent" to 0x00FFFFFF
     )
     
     private fun extractTailwindColor(className: String): JBColor? {

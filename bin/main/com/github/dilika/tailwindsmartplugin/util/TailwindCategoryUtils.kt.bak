@@ -1,0 +1,469 @@
+package com.github.dilika.tailwindsmartplugin.util
+
+import com.intellij.ui.JBColor
+import java.awt.Color
+
+object TailwindCategoryUtils {
+    enum class Category(val displayName: String, val color: JBColor) {
+        LAYOUT("Layout", JBColor(0x3B82F6, 0x3B82F6)),
+        TYPOGRAPHY("Typography", JBColor(0xEF4444, 0xEF4444)),
+        BACKGROUND("Background", JBColor(0x10B981, 0x10B981)),
+        BORDER("Border", JBColor(0xF59E0B, 0xF59E0B)),
+        EFFECTS("Effects", JBColor(0x8B5CF6, 0x8B5CF6)),
+        SPACING("Spacing", JBColor(0xEC4899, 0xEC4899)),
+        SIZING("Sizing", JBColor(0x6366F1, 0x6366F1)),
+        FLEXBOX("Flexbox", JBColor(0x14B8A6, 0x14B8A6)),
+        GRID("Grid", JBColor(0xF97316, 0xF97316)),
+        TRANSFORM("Transform", JBColor(0x4B5563, 0x4B5563)),
+        TRANSITION("Transition", JBColor(0xA78BFA, 0xA78BFA)),
+        INTERACTIVITY("Interactivity", JBColor(0x06B6D4, 0x06B6D4)),
+        ACCESSIBILITY("Accessibility", JBColor(0x64748B, 0x64748B)),
+        ANIMATION("Animation", JBColor(0xF43F5E, 0xF43F5E)),
+        POSITION("Position", JBColor(0x6366F1, 0x6366F1)),
+        OTHER("Other", JBColor(0x6B7280, 0x6B7280))
+    }
+
+    private val prefixToCategory = listOf(
+        "container" to Category.LAYOUT,
+        "block" to Category.LAYOUT,
+        "inline" to Category.LAYOUT,
+        "flex" to Category.FLEXBOX,
+        "grid" to Category.GRID,
+        "hidden" to Category.LAYOUT,
+        "text-" to Category.TYPOGRAPHY,
+        "font-" to Category.TYPOGRAPHY,
+        "tracking-" to Category.TYPOGRAPHY,
+        "leading-" to Category.TYPOGRAPHY,
+        "list-" to Category.TYPOGRAPHY,
+        "bg-" to Category.BACKGROUND,
+        "bg-opacity-" to Category.BACKGROUND,
+        "bg-gradient-" to Category.BACKGROUND,
+        "border" to Category.BORDER,
+        "border-" to Category.BORDER,
+        "rounded" to Category.BORDER,
+        "rounded-" to Category.BORDER,
+        "shadow" to Category.EFFECTS,
+        "shadow-" to Category.EFFECTS,
+        "opacity-" to Category.EFFECTS,
+        "filter" to Category.EFFECTS,
+        "blur-" to Category.EFFECTS,
+        "p-" to Category.SPACING,
+        "py-" to Category.SPACING,
+        "px-" to Category.SPACING,
+        "pl-" to Category.SPACING,
+        "pr-" to Category.SPACING,
+        "pt-" to Category.SPACING,
+        "pb-" to Category.SPACING,
+        "m-" to Category.SPACING,
+        "my-" to Category.SPACING,
+        "mx-" to Category.SPACING,
+        "ml-" to Category.SPACING,
+        "mr-" to Category.SPACING,
+        "mt-" to Category.SPACING,
+        "mb-" to Category.SPACING,
+        "space-" to Category.SPACING,
+        "gap-" to Category.SPACING,
+        "w-" to Category.SIZING,
+        "h-" to Category.SIZING,
+        "min-" to Category.SIZING,
+        "max-" to Category.SIZING,
+        "justify-" to Category.FLEXBOX,
+        "items-" to Category.FLEXBOX,
+        "flex-" to Category.FLEXBOX,
+        "col-" to Category.GRID,
+        "row-" to Category.GRID,
+        "scale-" to Category.TRANSFORM,
+        "rotate-" to Category.TRANSFORM,
+        "translate-" to Category.TRANSFORM,
+        "transform" to Category.TRANSFORM,
+        "transition" to Category.TRANSITION,
+        "duration-" to Category.TRANSITION,
+        "ease-" to Category.TRANSITION,
+        "delay-" to Category.TRANSITION,
+        "animate-" to Category.ANIMATION,
+        "cursor-" to Category.INTERACTIVITY,
+        "pointer-" to Category.INTERACTIVITY,
+        "resize" to Category.INTERACTIVITY,
+        "select-" to Category.INTERACTIVITY,
+        "focus" to Category.INTERACTIVITY,
+        "hover" to Category.INTERACTIVITY,
+        "sr-" to Category.ACCESSIBILITY,
+        "not-sr-" to Category.ACCESSIBILITY,
+        "static" to Category.POSITION,
+        "relative" to Category.POSITION,
+        "absolute" to Category.POSITION,
+        "fixed" to Category.POSITION,
+        "sticky" to Category.POSITION,
+        "top-" to Category.POSITION,
+        "right-" to Category.POSITION,
+        "bottom-" to Category.POSITION,
+        "left-" to Category.POSITION,
+        "inset-" to Category.POSITION,
+        "z-" to Category.POSITION,
+        // New prefixes for v1–v4 expansions
+        "ring" to Category.EFFECTS,
+        "ring-" to Category.EFFECTS,
+        "divide" to Category.BORDER,
+        "divide-" to Category.BORDER,
+        "outline" to Category.EFFECTS,
+        "outline-" to Category.EFFECTS,
+        "placeholder-" to Category.TYPOGRAPHY,
+        "mix-blend-" to Category.EFFECTS,
+        "bg-gradient-" to Category.BACKGROUND,
+        "from-" to Category.BACKGROUND,
+        "to-" to Category.BACKGROUND,
+        // Accent and caret color utilities
+        "accent-" to Category.INTERACTIVITY,
+        "caret-" to Category.INTERACTIVITY,
+        // Container and container query utilities
+        "container-query" to Category.LAYOUT,
+        "@container" to Category.LAYOUT
+    )
+
+    // Extended Tailwind color palette mise à jour avec toutes les couleurs jusqu'à 950
+    private val tailwindColors = mapOf(
+        // Red
+        "red-50" to 0xFEF2F2, "red-100" to 0xFEE2E2, "red-200" to 0xFECACA, "red-300" to 0xFCA5A5, "red-400" to 0xF87171,
+        "red-500" to 0xEF4444, "red-600" to 0xDC2626, "red-700" to 0xB91C1C, "red-800" to 0x991B1B, "red-900" to 0x7F1D1D,
+        "red-950" to 0x450A0A,
+        
+        // Blue
+        "blue-50" to 0xEFF6FF, "blue-100" to 0xDBEAFE, "blue-200" to 0xBFDBFE, "blue-300" to 0x93C5FD, "blue-400" to 0x60A5FA,
+        "blue-500" to 0x3B82F6, "blue-600" to 0x2563EB, "blue-700" to 0x1D4ED8, "blue-800" to 0x1E40AF, "blue-900" to 0x1E3A8A,
+        "blue-950" to 0x172554,
+        
+        // Green
+        "green-50" to 0xF0FDF4, "green-100" to 0xDCFCE7, "green-200" to 0xBBF7D0, "green-300" to 0x86EFAC, "green-400" to 0x4ADE80,
+        "green-500" to 0x22C55E, "green-600" to 0x16A34A, "green-700" to 0x15803D, "green-800" to 0x166534, "green-900" to 0x14532D,
+        "green-950" to 0x052e16,
+        
+        // Emerald - Ajouté
+        "emerald-50" to 0xECFDF5, "emerald-100" to 0xD1FAE5, "emerald-200" to 0xA7F3D0, "emerald-300" to 0x6EE7B7, "emerald-400" to 0x34D399,
+        "emerald-500" to 0x10B981, "emerald-600" to 0x059669, "emerald-700" to 0x047857, "emerald-800" to 0x065F46, "emerald-900" to 0x064E3B,
+        "emerald-950" to 0x022c22,
+        
+        // Gray
+        "gray-50" to 0xF9FAFB, "gray-100" to 0xF3F4F6, "gray-200" to 0xE5E7EB, "gray-300" to 0xD1D5DB, "gray-400" to 0x9CA3AF,
+        "gray-500" to 0x6B7280, "gray-600" to 0x4B5563, "gray-700" to 0x374151, "gray-800" to 0x1F2937, "gray-900" to 0x111827,
+        "gray-950" to 0x030712, "gray-975" to 0x020408,
+        
+        // Slate
+        "slate-50" to 0xF8FAFC, "slate-100" to 0xF1F5F9, "slate-200" to 0xE2E8F0, "slate-300" to 0xCBD5E1, "slate-400" to 0x94A3B8,
+        "slate-500" to 0x64748B, "slate-600" to 0x475569, "slate-700" to 0x334155, "slate-800" to 0x1E293B, "slate-900" to 0x0F172A,
+        "slate-950" to 0x020617, "slate-975" to 0x010313,
+        
+        // Yellow
+        "yellow-50" to 0xFFFBEB, "yellow-100" to 0xFEF3C7, "yellow-200" to 0xFDE68A, "yellow-300" to 0xFCD34D, "yellow-400" to 0xFBBF24,
+        "yellow-500" to 0xF59E0B, "yellow-600" to 0xD97706, "yellow-700" to 0xB45309, "yellow-800" to 0x92400E, "yellow-900" to 0x78350F,
+        "yellow-950" to 0x451a03,
+        
+        // Amber
+        "amber-50" to 0xFFFBEB, "amber-100" to 0xFEF3C7, "amber-200" to 0xFDE68A, "amber-300" to 0xFCD34D, "amber-400" to 0xFBBF24,
+        "amber-500" to 0xF59E0B, "amber-600" to 0xD97706, "amber-700" to 0xB45309, "amber-800" to 0x92400E, "amber-900" to 0x78350F,
+        "amber-950" to 0x451a03,
+        
+        // Indigo
+        "indigo-50" to 0xEEF2FF, "indigo-100" to 0xE0E7FF, "indigo-200" to 0xC7D2FE, "indigo-300" to 0xA5B4FC, "indigo-400" to 0x818CF8,
+        "indigo-500" to 0x6366F1, "indigo-600" to 0x4F46E5, "indigo-700" to 0x4338CA, "indigo-800" to 0x3730A3, "indigo-900" to 0x312E81,
+        "indigo-950" to 0x1e1b4b,
+        
+        // Purple
+        "purple-50" to 0xF5F3FF, "purple-100" to 0xEDE9FE, "purple-200" to 0xDDD6FE, "purple-300" to 0xC4B5FD, "purple-400" to 0xA78BFA,
+        "purple-500" to 0x8B5CF6, "purple-600" to 0x7C3AED, "purple-700" to 0x6D28D9, "purple-800" to 0x5B21B6, "purple-900" to 0x4C1D95,
+        "purple-950" to 0x2e1065,
+        
+        // Violet
+        "violet-50" to 0xF5F3FF, "violet-100" to 0xEDE9FE, "violet-200" to 0xDDD6FE, "violet-300" to 0xC4B5FD, "violet-400" to 0xA78BFA,
+        "violet-500" to 0x8B5CF6, "violet-600" to 0x7C3AED, "violet-700" to 0x6D28D9, "violet-800" to 0x5B21B6, "violet-900" to 0x4C1D95,
+        "violet-950" to 0x2e1065,
+        
+        // Pink
+        "pink-50" to 0xFDF2F8, "pink-100" to 0xFCE7F3, "pink-200" to 0xFBCFE8, "pink-300" to 0xF9A8D4, "pink-400" to 0xF472B6,
+        "pink-500" to 0xEC4899, "pink-600" to 0xDB2777, "pink-700" to 0xBE185D, "pink-800" to 0x9D174D, "pink-900" to 0x831843,
+        "pink-950" to 0x500724,
+        
+        // Rose
+        "rose-50" to 0xFFF1F2, "rose-100" to 0xFFE4E6, "rose-200" to 0xFECDD3, "rose-300" to 0xFDA4AF, "rose-400" to 0xFB7185,
+        "rose-500" to 0xF43F5E, "rose-600" to 0xE11D48, "rose-700" to 0xBE123C, "rose-800" to 0x9F1239, "rose-900" to 0x881337,
+        "rose-950" to 0x4c0519,
+        
+        // Teal
+        "teal-50" to 0xF0FDFA, "teal-100" to 0xCCFBF1, "teal-200" to 0x99F6E4, "teal-300" to 0x5EEAD4, "teal-400" to 0x2DD4BF,
+        "teal-500" to 0x14B8A6, "teal-600" to 0x0D9488, "teal-700" to 0x0F766E, "teal-800" to 0x115E59, "teal-900" to 0x134E4A,
+        "teal-950" to 0x042f2e,
+        
+        // Orange
+        "orange-50" to 0xFFF7ED, "orange-100" to 0xFFEDD5, "orange-200" to 0xFED7AA, "orange-300" to 0xFDBA74, "orange-400" to 0xFB923C,
+        "orange-500" to 0xF97316, "orange-600" to 0xEA580C, "orange-700" to 0xC2410C, "orange-800" to 0x9A3412, "orange-900" to 0x7C2D12,
+        "orange-950" to 0x431407,
+        
+        // Cyan
+        "cyan-50" to 0xECFEFF, "cyan-100" to 0xCFFAFE, "cyan-200" to 0xA5F3FC, "cyan-300" to 0x67E8F9, "cyan-400" to 0x22D3EE,
+        "cyan-500" to 0x06B6D4, "cyan-600" to 0x0891B2, "cyan-700" to 0x0E7490, "cyan-800" to 0x155E75, "cyan-900" to 0x164E63,
+        "cyan-950" to 0x083344,
+        
+        // Sky
+        "sky-50" to 0xF0F9FF, "sky-100" to 0xE0F2FE, "sky-200" to 0xBAE6FD, "sky-300" to 0x7DD3FC, "sky-400" to 0x38BDF8,
+        "sky-500" to 0x0EA5E9, "sky-600" to 0x0284C7, "sky-700" to 0x0369A1, "sky-800" to 0x075985, "sky-900" to 0x0C4A6E,
+        "sky-950" to 0x082f49,
+        
+        // Lime
+        "lime-50" to 0xF7FEE7, "lime-100" to 0xECFCCB, "lime-200" to 0xD9F99D, "lime-300" to 0xBEF264, "lime-400" to 0xA3E635,
+        "lime-500" to 0x84CC16, "lime-600" to 0x65A30D, "lime-700" to 0x4D7C0F, "lime-800" to 0x3F6212, "lime-900" to 0x365314,
+        "lime-950" to 0x1a2e05,
+        
+        // Fuchsia
+        "fuchsia-50" to 0xFDF4FF, "fuchsia-100" to 0xFAE8FF, "fuchsia-200" to 0xF5D0FE, "fuchsia-300" to 0xF0ABFC, "fuchsia-400" to 0xE879F9,
+        "fuchsia-500" to 0xD946EF, "fuchsia-600" to 0xC026D3, "fuchsia-700" to 0xA21CAF, "fuchsia-800" to 0x86198F, "fuchsia-900" to 0x701A75,
+        "fuchsia-950" to 0x4a044e, "fuchsia-975" to 0x33022e,
+        
+        // Stone
+        "stone-50" to 0xFAFAF9, "stone-100" to 0xF5F5F4, "stone-200" to 0xE7E5E4, "stone-300" to 0xD6D3D1, "stone-400" to 0xA8A29E,
+        "stone-500" to 0x78716C, "stone-600" to 0x57534E, "stone-700" to 0x44403C, "stone-800" to 0x292524, "stone-900" to 0x1C1917,
+        "stone-950" to 0x0c0a09,
+        
+        // Zinc
+        "zinc-50" to 0xFAFAFA, "zinc-100" to 0xF4F4F5, "zinc-200" to 0xE4E4E7, "zinc-300" to 0xD4D4D8, "zinc-400" to 0xA1A1AA,
+        "zinc-500" to 0x71717A, "zinc-600" to 0x52525B, "zinc-700" to 0x3F3F46, "zinc-800" to 0x27272A, "zinc-900" to 0x18181B,
+        "zinc-950" to 0x09090b,
+        
+        // Neutral
+        "neutral-50" to 0xFAFAFA, "neutral-100" to 0xF5F5F5, "neutral-200" to 0xE5E5E5, "neutral-300" to 0xD4D4D4, "neutral-400" to 0xA3A3A3,
+        "neutral-500" to 0x737373, "neutral-600" to 0x525252, "neutral-700" to 0x404040, "neutral-800" to 0x262626, "neutral-900" to 0x171717,
+        "neutral-950" to 0x0a0a0a, "neutral-975" to 0x050505,
+        
+        // Nouvelles couleurs Tailwind v4
+        // Copper
+        "copper-50" to 0xFDFAF6, "copper-100" to 0xFAF5EC, "copper-200" to 0xF4E9D9, "copper-300" to 0xEBD4B7,
+        "copper-400" to 0xDCB992, "copper-500" to 0xCA9B6B, "copper-600" to 0xB68050, "copper-700" to 0x8C5F3A,
+        "copper-800" to 0x704D31, "copper-900" to 0x59402D, "copper-950" to 0x3A2A1E, "copper-975" to 0x211810,
+        
+        // Jungle
+        "jungle-50" to 0xF1FCF5, "jungle-100" to 0xE0F8E8, "jungle-200" to 0xC5EED2, "jungle-300" to 0x9ADEB0,
+        "jungle-400" to 0x71C587, "jungle-500" to 0x4DA761, "jungle-600" to 0x378A47, "jungle-700" to 0x2A6C39,
+        "jungle-800" to 0x265732, "jungle-900" to 0x21472B, "jungle-950" to 0x132C1A, "jungle-975" to 0x0A1B0F,
+        
+        // Sand
+        "sand-50" to 0xFCFAF7, "sand-100" to 0xF9F5EE, "sand-200" to 0xF1EADC, "sand-300" to 0xE6D8C0,
+        "sand-400" to 0xD4BD9A, "sand-500" to 0xC1A174, "sand-600" to 0xAF8755, "sand-700" to 0x8A663F,
+        "sand-800" to 0x6F5334, "sand-900" to 0x5A442F, "sand-950" to 0x3A2C1F, "sand-975" to 0x211A13,
+        
+        // Chestnut
+        "chestnut-50" to 0xFBF6F3, "chestnut-100" to 0xF6ECE7, "chestnut-200" to 0xEFD7CE, "chestnut-300" to 0xE4B8A5,
+        "chestnut-400" to 0xD2917A, "chestnut-500" to 0xBE6D52, "chestnut-600" to 0xAA5439, "chestnut-700" to 0x833F2D,
+        "chestnut-800" to 0x6A3428, "chestnut-900" to 0x562E24, "chestnut-950" to 0x391C17, "chestnut-975" to 0x23110E,
+        
+        // Midnight
+        "midnight-50" to 0xF2F5FA, "midnight-100" to 0xE4EBF5, "midnight-200" to 0xCDD8EB, "midnight-300" to 0xA7BCE0,
+        "midnight-400" to 0x7C9BD1, "midnight-500" to 0x567AC1, "midnight-600" to 0x3F62B0, "midnight-700" to 0x334D8E,
+        "midnight-800" to 0x2C3F71, "midnight-900" to 0x29375B, "midnight-950" to 0x1B233D, "midnight-975" to 0x101524,
+        
+        // Aqua
+        "aqua-50" to 0xF0FCFE, "aqua-100" to 0xDFF9FD, "aqua-200" to 0xB9F2FC, "aqua-300" to 0x84E7F9,
+        "aqua-400" to 0x52D7F0, "aqua-500" to 0x29BFE0, "aqua-600" to 0x1E9CC0, "aqua-700" to 0x1A7C9B,
+        "aqua-800" to 0x1B647E, "aqua-900" to 0x1C5368, "aqua-950" to 0x103545, "aqua-975" to 0x0A2129,
+        
+        // Cherry
+        "cherry-50" to 0xFDF0F2, "cherry-100" to 0xFCE1E5, "cherry-200" to 0xF9C7CF, "cherry-300" to 0xF7A3B0,
+        "cherry-400" to 0xF27589, "cherry-500" to 0xE54760, "cherry-600" to 0xCC2D47, "cherry-700" to 0xA62338,
+        "cherry-800" to 0x851F31, "cherry-900" to 0x6F1D2C, "cherry-950" to 0x47121D, "cherry-975" to 0x2A0B12,
+        
+        // Magenta
+        "magenta-50" to 0xFDF0F7, "magenta-100" to 0xFDE1EF, "magenta-200" to 0xFCC9E3, "magenta-300" to 0xFAA5D1,
+        "magenta-400" to 0xF777B6, "magenta-500" to 0xE94A9C, "magenta-600" to 0xD0297D, "magenta-700" to 0xA91D62,
+        "magenta-800" to 0x881A50, "magenta-900" to 0x721947, "magenta-950" to 0x4A0F2E, "magenta-975" to 0x2C0A1C,
+        
+        // Moss
+        "moss-50" to 0xF1F9F2, "moss-100" to 0xE2F3E4, "moss-200" to 0xC9E7CE, "moss-300" to 0xA3D4AE,
+        "moss-400" to 0x76B886, "moss-500" to 0x4E9A63, "moss-600" to 0x397C4B, "moss-700" to 0x2D623D,
+        "moss-800" to 0x274E33, "moss-900" to 0x21402E, "moss-950" to 0x15291C, "moss-975" to 0x0C1911,
+        
+        // Sapphire
+        "sapphire-50" to 0xF2F7FE, "sapphire-100" to 0xE4EEFD, "sapphire-200" to 0xCCDFFB, "sapphire-300" to 0xA5C7F9,
+        "sapphire-400" to 0x75A6F6, "sapphire-500" to 0x4B83F0, "sapphire-600" to 0x3063E1, "sapphire-700" to 0x264CC8,
+        "sapphire-800" to 0x213D9E, "sapphire-900" to 0x1D347D, "sapphire-950" to 0x132253, "sapphire-975" to 0x0C1531,
+        
+        // Charcoal
+        "charcoal-50" to 0xF0F1F3, "charcoal-100" to 0xE0E3E8, "charcoal-200" to 0xC5CAD2, "charcoal-300" to 0xA2AAB8,
+        "charcoal-400" to 0x798495, "charcoal-500" to 0x5B6578, "charcoal-600" to 0x4A5160, "charcoal-700" to 0x3A4050,
+        "charcoal-800" to 0x303542, "charcoal-900" to 0x272D37, "charcoal-950" to 0x1A1E26, "charcoal-975" to 0x10131A,
+        
+        // Lava
+        "lava-50" to 0xFDF2F0, "lava-100" to 0xFBE5E1, "lava-200" to 0xF8CFC7, "lava-300" to 0xF5AEA1,
+        "lava-400" to 0xF08573, "lava-500" to 0xE65C45, "lava-600" to 0xD13823, "lava-700" to 0xAB2D1E,
+        "lava-800" to 0x88261C, "lava-900" to 0x71241C, "lava-950" to 0x491714, "lava-975" to 0x2A0E0D,
+        
+        // Sunset
+        "sunset-50" to 0xFDF7F0, "sunset-100" to 0xFBEEE0, "sunset-200" to 0xF8DAC3, "sunset-300" to 0xF5BD99,
+        "sunset-400" to 0xF0996C, "sunset-500" to 0xE7723D, "sunset-600" to 0xD5501F, "sunset-700" to 0xAD3C1A,
+        "sunset-800" to 0x89321B, "sunset-900" to 0x722B1B, "sunset-950" to 0x4A1C13, "sunset-975" to 0x2B110D,
+        
+        // Marine
+        "marine-50" to 0xF0F9FC, "marine-100" to 0xDEF3F9, "marine-200" to 0xC2E7F3, "marine-300" to 0x99D6EC,
+        "marine-400" to 0x67BCE2, "marine-500" to 0x3C9ED5, "marine-600" to 0x2682C3, "marine-700" to 0x2068A2,
+        "marine-800" to 0x1C5684, "marine-900" to 0x1A486C, "marine-950" to 0x122E47, "marine-975" to 0x0A1D2C
+    )
+
+    // Direct mapping for specific class names that don't follow the standard pattern
+    private val directColorMapping = mapOf(
+        "bg-white" to 0xFFFFFF,
+        "bg-black" to 0x000000,
+        "text-white" to 0xFFFFFF,
+        "text-black" to 0x000000,
+        "border-white" to 0xFFFFFF,
+        "border-black" to 0x000000,
+        "ring-white" to 0xFFFFFF,
+        "ring-black" to 0x000000,
+        "divide-white" to 0xFFFFFF,
+        "divide-black" to 0x000000
+    )
+    
+    /**
+     * Extracts a Tailwind color from a class name
+     */
+    private fun extractTailwindColor(className: String): JBColor? {
+        try {
+            // Direct mapping for specific classes like bg-white
+            directColorMapping[className]?.let { return createJBColorFromHex(it) }
+            
+            // Remove variants (hover:, focus:, etc.)
+            val base = className.split(":").last()
+            // Remove opacity/alpha (e.g. bg-red-500/50)
+            val colorPart = base.substringBefore("/")
+            
+            // Check direct mapping first (exact matches like bg-white, text-black)
+            val directMatch = directColorMapping[colorPart] 
+            if (directMatch != null) {
+                // Direct match found
+                return createJBColorFromHex(directMatch)
+            }
+        
+            // Handle common colors with explicit short names (bg-red, text-blue, etc.)
+            val basicColorRegex = Regex("(bg|text|border|ring|shadow|divide|outline|accent|caret|fill|stroke)-([a-z]+)$")
+            if (colorPart.matches(basicColorRegex)) {
+                val parts = colorPart.split("-")
+                if (parts.size >= 2) {
+                    val colorName = parts[1]
+                    // Try with default shade of 500
+                    val defaultShade = "$colorName-500"
+                    tailwindColors[defaultShade]?.let { rgb ->
+                        return createJBColorFromHex(rgb)
+                    }
+                    // Try with alternate shade of 600 if 500 isn't found
+                    val alternateShade = "$colorName-600"
+                    tailwindColors[alternateShade]?.let { rgb ->
+                        return createJBColorFromHex(rgb)
+                    }
+                    // Try with 400 as another fallback
+                    val fallbackShade = "$colorName-400"
+                    tailwindColors[fallbackShade]?.let { rgb ->
+                        return createJBColorFromHex(rgb)
+                    }
+                }
+            }
+            }
+        }
+        
+        // Match standard patterns like bg-red-500, text-blue-700, border-green-300
+        val standardRegex = Regex("(bg|text|border|ring|shadow|divide|outline|accent|caret|fill|stroke)-([a-z]+)-(\\d{2,3})")
+        val standardMatch = standardRegex.find(colorPart)
+        
+        if (standardMatch != null) {
+            val colorKey = "${standardMatch.groupValues[2]}-${standardMatch.groupValues[3]}"
+            tailwindColors[colorKey]?.let { rgb ->
+                return createJBColorFromHex(rgb)
+            }
+        }
+        
+        // Meilleure extraction pour les classes de gradient (from-gray-50, to-blue-500, etc.)
+        val gradientColorRegex = Regex("(from|to|via)-([a-z]+)-(\\d{2,3})$")
+        val gradientMatch = gradientColorRegex.find(colorPart)
+        if (gradientMatch != null) {
+            // Extrait directement le nom de couleur et la teinte
+            val colorName = gradientMatch.groupValues[2]
+            val shade = gradientMatch.groupValues[3]
+            val colorKey = "$colorName-$shade"
+            
+            // Recherche la couleur exacte dans la palette
+            tailwindColors[colorKey]?.let { rgb ->
+                return createJBColorFromHex(rgb)
+            }
+        }
+        
+        // Pour les cas comme from-red, to-blue sans indication de teinte
+        val simpleGradientRegex = Regex("(from|to|via)-([a-z]+)$")
+        val simpleGradientMatch = simpleGradientRegex.find(colorPart)
+        if (simpleGradientMatch != null) {
+            val colorName = simpleGradientMatch.groupValues[2]
+            
+            // Couleurs standard sans teinte
+            val standardColor = when (colorName) {
+                "white" -> 0xFFFFFF
+                "black" -> 0x000000
+                "primary" -> 0x3B82F6 // Default to blue-500 for primary
+                "secondary" -> 0x6B7280 // Default to gray-500 for secondary
+                "red" -> 0xEF4444 // red-500
+                "blue" -> 0x3B82F6 // blue-500
+                "green" -> 0x22C55E // green-500
+                "yellow" -> 0xF59E0B // yellow-500
+                "purple" -> 0x8B5CF6 // purple-500
+                "pink" -> 0xEC4899 // pink-500
+                else -> null
+            }
+            
+            if (standardColor != null) {
+                return createJBColorFromHex(standardColor)
+            }
+            
+            // Essayer avec la teinte 500 par défaut
+            val defaultShade = "$colorName-500"
+            tailwindColors[defaultShade]?.let { rgb ->
+                return createJBColorFromHex(rgb)
+            }
+        }
+        
+        // Try to find the closest match by looking at the base color name if available
+        val anyColorRegex = Regex("(bg|text|border|ring|shadow|divide|outline|accent|caret|fill|stroke)-([a-z0-9-]+)")
+        val anyMatch = anyColorRegex.find(colorPart) 
+        if (anyMatch != null && anyMatch.groupValues.size > 2) {
+            val typeAndColor = anyMatch.groupValues[2]
+            // Look for any entry in tailwindColors that starts with this color name
+            val matchingColor = tailwindColors.entries.firstOrNull { (key, _) ->
+                key.startsWith(typeAndColor)
+            }
+            matchingColor?.let { (_, rgb) ->
+                return createJBColorFromHex(rgb)
+            }
+        }
+        
+        // Also handle color-specific utilities without prefix like red-500, blue-300, etc.
+        val colorOnlyRegex = Regex("([a-z]+)-(\\d{2,3})$")
+        val colorOnlyMatch = colorOnlyRegex.find(colorPart)
+        if (colorOnlyMatch != null) {
+            val colorKey = colorPart // e.g. "red-500"
+            tailwindColors[colorKey]?.let { rgb ->
+                return createJBColorFromHex(rgb)
+            }
+        }
+        
+        return null
+    }
+    
+    /**
+     * Creates a JBColor from a hexadecimal color value, ensuring it works in both light and dark themes
+     */
+    private fun createJBColorFromHex(hex: Int): JBColor {
+        // Simpler approach: just use the integer value directly for both light and dark themes
+        return JBColor(hex, hex)
+    }
+
+    fun getCategoryAndColor(className: String): Pair<String, JBColor> {
+        val color = extractTailwindColor(className)
+        for ((prefix, category) in prefixToCategory) {
+            if (className == prefix || className.startsWith(prefix)) {
+                return category.displayName to (color ?: category.color)
+            }
+        }
+        return Category.OTHER.displayName to (color ?: Category.OTHER.color)
+    }
+}

@@ -177,7 +177,7 @@ class TailwindFoldingService {
         pattern: String,
         contentGroupIndex: Int,
         elementStart: Int,
-        element: PsiElement
+        element: PsiElement // Parameter kept for potential future use
     ) {
         val regex = pattern.toRegex()
         val matches = regex.findAll(text)
@@ -246,7 +246,7 @@ class TailwindFoldingService {
     /**
      * Specifically unfolds all Tailwind class regions.
      */
-    fun unfoldAllTailwindClasses(editor: Editor, psiFile: PsiFile) {
+    fun unfoldAllTailwindClasses(editor: Editor, psiFile: PsiFile) { // psiFile kept for API compatibility
         val foldingModel = editor.foldingModel
         
         // Find all Tailwind class regions

@@ -107,6 +107,20 @@
         <!-- Services -->
         <projectService
                 serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigService"/>
+        <projectService
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.services.TailwindConfigAnalyzer"/>
+        <projectService
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.jit.TailwindJitSupport"/>
+        <projectService
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.context.TailwindContextualSuggestions"/>
+        <applicationService
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.settings.TailwindPluginSettings"/>
+        
+        <!-- Settings UI -->
+        <applicationConfigurable parentId="tools"
+                instance="com.github.dilika.tailwindsmartplugin.settings.TailwindSettingsConfigurable"
+                id="com.github.dilika.tailwindsmartplugin.settings.TailwindSettingsConfigurable"
+                displayName="Tailwind CSS Smart Plugin"/>
         
         <!-- Register our action registrar service - commented out as the class does not exist -->
         <!-- 

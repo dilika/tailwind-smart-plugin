@@ -15,8 +15,24 @@ import org.json.JSONObject
 @Suppress("unused") // Registered via plugin.xml
 class TailwindDocumentationProvider : AbstractDocumentationProvider(), DocumentationProvider {
     private val logger = Logger.getInstance(TailwindDocumentationProvider::class.java)
+    private val enhancedDocumentation = TailwindEnhancedDocumentation()
 
+    /**
+     * Override getQuickNavigateInfo to ensure Tailwind documentation is prioritized
+     * This method is called first for quick documentation display
+     */
+    override fun getQuickNavigateInfo(element: PsiElement?, originalElement: PsiElement?): String? {
+        return generateTailwindDoc(element, originalElement)
+    }
+    
     override fun generateDoc(element: PsiElement?, originalElement: PsiElement?): String? {
+        return generateTailwindDoc(element, originalElement)
+    }
+    
+    /**
+     * Generate Tailwind documentation with high priority
+     */
+    private fun generateTailwindDoc(element: PsiElement?, originalElement: PsiElement?): String? {
         if (element == null) return null
 
         try {
@@ -32,53 +48,163 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
             // Get the current project
             val project = element.project
             
-            // Get Tailwind classes specific to the project
+            // Check if this is a Tailwind class
+            // 1. Get standard Tailwind classes
             val tailwindClasses = TailwindUtils.getTailwindClasses(project)
+            // 2. Check if it's a CSS property or a Tailwind class pattern (bg-, text-, etc.)
+            val isTailwindClass = tailwindClasses.contains(className) || 
+                                 isTailwindPattern(className)
             
-            return if (tailwindClasses.contains(className)) {
-                // Found in Tailwind classes - generate rich documentation
-                createRichDocumentation(className, project)
-            } else {
-                // Not found - generate basic documentation
-                generateBasicDocumentation(className)
+            if (!isTailwindClass) {
+                // Not a Tailwind class, let other providers handle it
+                return null
+            }
+            
+            try {
+                // Utiliser la documentation enrichie pour toutes les classes
+                val enhancedDoc = enhancedDocumentation.generateDocumentation(className)
+                
+                if (tailwindClasses.contains(className)) {
+                    try {
+                        // Found in Tailwind classes - generate rich documentation with enhanced content
+                        val richDoc = createRichDocumentation(className, project)
+                        // Combine both documentations with enhanced content first
+                        return enhancedDoc + "<hr/>" + richDoc
+                    } catch (e: Exception) {
+                        logger.warn("Error generating rich documentation: ${e.message}")
+                        // On continue avec la documentation simple si la riche échoue
+                        return enhancedDoc.ifEmpty { generateBasicDocumentation(className) }
+                    }
+                } else {
+                    // Not found in standard classes - use enhanced documentation or basic fallback
+                    return enhancedDoc.ifEmpty { generateBasicDocumentation(className) }
+                }
+            } catch (e: Exception) {
+                logger.warn("Enhanced documentation failed, using basic documentation: ${e.message}")
+                // Fallback sur la documentation de base en cas d'échec de la documentation enrichie
+                return generateBasicDocumentation(className)
             }
         } catch (e: Exception) {
             logger.error("Error generating documentation: ${e.message}")
-            return generateErrorDocumentation("Failed to generate documentation", e)
+            // En dernier recours seulement
+            return generateBasicDocumentation(element.text ?: "unknown")
         }
+    }
+    
+    /**
+     * Check if a class name follows Tailwind naming patterns
+     */
+    private fun isTailwindPattern(className: String): Boolean {
+        // Common Tailwind prefixes
+        val tailwindPrefixes = listOf(
+            "bg-", "text-", "font-", "border-", "rounded-", "p-", "m-", "px-", "py-", "mx-", "my-",
+            "flex-", "grid-", "gap-", "w-", "h-", "max-w-", "min-w-", "max-h-", "min-h-",
+            "opacity-", "shadow-", "z-", "from-", "to-", "via-", "transition-", "ease-", "duration-",
+            "scale-", "rotate-", "translate-", "skew-", "transform-", "space-", "divide-", "justify-",
+            "align-", "list-", "float-", "overflow-", "tracking-", "leading-", "underline", "line-through",
+            "italic", "not-italic", "uppercase", "lowercase", "capitalize", "normal-case", "truncate",
+            "outline-", "ring-", "filter-", "blur-", "brightness-", "contrast-", "grayscale-", "invert-",
+            "saturate-", "sepia-", "backdrop-"
+        )
+        
+        // Common Tailwind responsive and state variants
+        val tailwindVariants = listOf(
+            "sm:", "md:", "lg:", "xl:", "2xl:", "hover:", "focus:", "active:", "disabled:",
+            "visited:", "checked:", "first:", "last:", "even:", "odd:", "group-hover:", "peer-hover:",
+            "dark:", "motion-safe:", "motion-reduce:", "print:", "rtl:", "ltr:"
+        )
+        
+        // Check for variants + prefix patterns
+        for (variant in tailwindVariants) {
+            if (className.startsWith(variant)) {
+                val baseClass = className.substring(variant.length)
+                for (prefix in tailwindPrefixes) {
+                    if (baseClass.startsWith(prefix)) {
+                        return true
+                    }
+                }
+            }
+        }
+        
+        // Check for direct prefix patterns
+        for (prefix in tailwindPrefixes) {
+            if (className.startsWith(prefix)) {
+                return true
+            }
+        }
+        
+        // Match JIT arbitrary values like p-[20px], text-[#336699], etc.
+        if (className.contains("[") && className.contains("]")) {
+            for (prefix in tailwindPrefixes) {
+                if (className.startsWith(prefix)) {
+                    return true
+                }
+            }
+        }
+        
+        return false
     }
     
     /**
      * Extract class name from the PsiElement
      */
     private fun extractClassName(element: PsiElement, originalElement: PsiElement?): String? {
-        return when {
-            element is XmlAttributeValue -> {
-                // Check if it's a class attribute
-                val attributeName = element.parent?.firstChild?.text
-                if (attributeName != "class" && attributeName != "className") return null
-                
-                // Get the cursor position if available
-                val cursorOffset = originalElement?.let {
-                    it.textRange.startOffset - element.textRange.startOffset
-                } ?: 0
-                
-                // Find the class at cursor
-                findClassAtCursor(element.value, cursorOffset)
+        logger.info("Extracting class name from element: ${element.text}")
+        
+        try {
+            return when {
+                element is XmlAttributeValue -> {
+                    // Check if it's a class attribute
+                    val attributeName = element.parent?.firstChild?.text
+                    if (attributeName != "class" && attributeName != "className") return null
+                    
+                    // Get the cursor position if available
+                    val cursorOffset = originalElement?.let {
+                        it.textRange.startOffset - element.textRange.startOffset
+                    } ?: 0
+                    
+                    // Find the class at cursor
+                    findClassAtCursor(element.value, cursorOffset)
+                }
+                element.parent is XmlAttributeValue -> {
+                    val attributeValue = element.parent as XmlAttributeValue
+                    // Check if it's a class attribute
+                    val attributeName = attributeValue.parent?.firstChild?.text
+                    if (attributeName != "class" && attributeName != "className") return null
+                    
+                    // Get the cursor position relative to the parent
+                    val cursorOffset = originalElement?.let {
+                        it.textRange.startOffset - attributeValue.textRange.startOffset
+                    } ?: 0
+                    
+                    // Find the class at cursor using the parent's value
+                    findClassAtCursor(attributeValue.value, cursorOffset)
+                }
+                element.text.contains(" ") -> {
+                    // This might be a text node with multiple classes
+                    val text = element.text.trim().removeSurrounding("\"")
+                    val cursorOffset = originalElement?.let {
+                        it.textRange.startOffset - element.textRange.startOffset
+                    } ?: 0
+                    
+                    // Find the specific class at cursor
+                    findClassAtCursor(text, cursorOffset)
+                }
+                else -> {
+                    // This might be a single class
+                    val candidateClass = element.text.trim().removeSurrounding("\"")
+                    
+                    // Only return if it looks like a valid Tailwind class (not an empty string or just whitespace)
+                    if (candidateClass.isNotEmpty() && !candidateClass.all { it.isWhitespace() }) {
+                        candidateClass
+                    } else {
+                        null
+                    }
+                }
             }
-            element.parent is XmlAttributeValue -> {
-                val attributeValue = element.parent as XmlAttributeValue
-                // Check if it's a class attribute
-                val attributeName = attributeValue.parent?.firstChild?.text
-                if (attributeName != "class" && attributeName != "className") return null
-                
-                // Try to extract the class directly from the element text
-                element.text.trim().removeSurrounding("\"")
-            }
-            else -> {
-                // Try to use the element text directly
-                element.text.trim().removeSurrounding("\"")
-            }
+        } catch (e: Exception) {
+            logger.error("Error extracting class name", e)
+            return null
         }
     }
     
@@ -322,35 +448,73 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
      * Find the Tailwind class at the cursor position
      */
     private fun findClassAtCursor(text: String, cursorOffset: Int): String? {
+        logger.info("Finding class at cursor. Text length: ${text.length}, Cursor offset: $cursorOffset")
+        
         if (text.isBlank() || cursorOffset < 0 || cursorOffset > text.length) {
+            logger.info("Invalid text or cursor position")
             return null
         }
         
-        // Split into classes
-        val classes = text.split(Regex("\\s+"))
-        
-        var currentPosition = 0
-        
-        for (className in classes) {
-            if (className.isEmpty()) {
-                currentPosition++
-                continue
+        try {
+            // Handle quoted strings by removing quotes
+            val cleanText = text.trim().removeSurrounding("\"").removeSurrounding("'")
+            
+            // Adjust cursor offset for cleaned text if needed
+            var adjustedOffset = cursorOffset
+            if (text != cleanText && text.startsWith("\"") || text.startsWith("'")) {
+                adjustedOffset = adjustedOffset - 1
             }
             
-            val start = text.indexOf(className, currentPosition)
-            if (start == -1) continue
-            
-            val end = start + className.length
-            
-            // Check if cursor is within this class
-            if (cursorOffset in start..end) {
-                return className
+            if (adjustedOffset < 0 || adjustedOffset > cleanText.length) {
+                logger.info("Adjusted offset out of bounds: $adjustedOffset for text length ${cleanText.length}")
+                return null
             }
             
-            currentPosition = end
+            // Split by any whitespace (including multiple spaces, tabs, etc.)
+            val classes = cleanText.split(Regex("\\s+"))
+            logger.info("Found ${classes.size} classes in text: ${classes.joinToString(", ")}")
+            
+            // Fast path for single class
+            if (classes.size == 1 && classes[0].isNotEmpty()) {
+                logger.info("Single class detected: ${classes[0]}")
+                return classes[0]
+            }
+            
+            var currentPosition = 0
+            
+            for (className in classes) {
+                if (className.isEmpty()) {
+                    currentPosition++
+                    continue
+                }
+                
+                // Find exact position of this class in the original text
+                val start = cleanText.indexOf(className, currentPosition)
+                if (start == -1) {
+                    logger.info("Could not find class '$className' at position $currentPosition")
+                    continue
+                }
+                
+                val end = start + className.length
+                
+                logger.info("Class: $className, Start: $start, End: $end, Cursor: $adjustedOffset")
+                
+                // Check if cursor is within or at the boundaries of this class
+                if (adjustedOffset >= start && adjustedOffset <= end) {
+                    logger.info("Found class at cursor: $className")
+                    return className
+                }
+                
+                currentPosition = end + 1 // Skip past this class and the following space
+            }
+            
+            logger.info("No class found at cursor position $adjustedOffset")
+            return null
+            
+        } catch (e: Exception) {
+            logger.error("Error finding class at cursor", e)
+            return null
         }
-        
-        return null
     }
     
     /**

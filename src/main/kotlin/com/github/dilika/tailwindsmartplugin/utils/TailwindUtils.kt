@@ -105,6 +105,21 @@ object TailwindUtils {
             }
         }
         
+        // Gradient backgrounds
+        val gradientDirections = listOf("t", "tr", "r", "br", "b", "bl", "l", "tl")
+        for (direction in gradientDirections) {
+            baseClasses.add("bg-gradient-to-$direction")
+        }
+        
+        // Gradient color stops
+        for (color in colors) {
+            for (shade in shades) {
+                baseClasses.add("from-$color-$shade")
+                baseClasses.add("to-$color-$shade")
+                baseClasses.add("via-$color-$shade")
+            }
+        }
+        
         // Text colors
         for (color in colors) {
             for (shade in shades) {

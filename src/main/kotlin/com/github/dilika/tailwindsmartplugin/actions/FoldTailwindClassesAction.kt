@@ -56,7 +56,7 @@ class FoldTailwindClassesAction : AnAction(), DumbAware {
 
     override fun actionPerformed(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
-        val project = e.project ?: return
+        e.project ?: return // Project is required but not used directly
         
         // Get the folding model
         val foldingModel = editor.foldingModel as? FoldingModelEx ?: return

@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
-import com.intellij.openapi.editor.event.EditorMouseAdapter
+import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -30,8 +30,8 @@ class TailwindFoldingClickListener : EditorFactoryListener {
     /**
      * Creates a mouse adapter that handles clicks on Tailwind folding regions.
      */
-    private fun createMouseAdapter(): EditorMouseAdapter {
-        return object : EditorMouseAdapter() {
+    private fun createMouseAdapter(): EditorMouseListener {
+        return object : EditorMouseListener {
             override fun mouseClicked(e: EditorMouseEvent) {
                 // Only process left-button clicks
                 if (e.mouseEvent.clickCount != 1 || e.mouseEvent.button != 1) {
