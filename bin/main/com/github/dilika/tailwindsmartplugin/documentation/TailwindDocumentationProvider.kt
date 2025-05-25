@@ -4,35 +4,343 @@ import com.github.dilika.tailwindsmartplugin.utils.TailwindUtils
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.xml.XmlAttributeValue
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.xml.*
+import com.intellij.openapi.project.Project
 import org.json.JSONObject
 
 /**
  * Provides documentation for Tailwind CSS classes
  */
 @Suppress("unused") // Registered via plugin.xml
-class TailwindDocumentationProvider : AbstractDocumentationProvider(), DocumentationProvider {
+class TailwindDocumentationProvider : AbstractDocumentationProvider() {
     private val logger = Logger.getInstance(TailwindDocumentationProvider::class.java)
     private val enhancedDocumentation = TailwindEnhancedDocumentation()
-
+    
+    // Key for storing Tailwind class name in element user data
+    internal val TAILWIND_CLASS_KEY = com.intellij.openapi.util.Key<String>("TAILWIND_CLASS_NAME")
+    
+    /**
+     * Helper function to prettify values for display
+     */
+    internal fun prettifyValue(value: String): String {
+        return when {
+            value.isEmpty() -> ""
+            value == "auto" -> "auto"
+            value == "none" -> "none"
+            value == "full" -> "100%"
+            value == "screen" -> "100vh"
+            value.matches(Regex("\\d+/\\d+")) -> {
+                val parts = value.split("/")
+                try {
+                    val numerator = parts[0].toInt()
+                    val denominator = parts[1].toInt()
+                    if (denominator != 0) {
+                        val percentage = (numerator.toDouble() / denominator) * 100
+                        String.format("%.1f%%", percentage)
+                    } else {
+                        value
+                    }
+                } catch (e: Exception) {
+                    value
+                }
+            }
+            value.endsWith("%") -> value
+            value.endsWith("px") -> value
+            value.endsWith("rem") -> value
+            value.endsWith("em") -> value
+            value.startsWith("#") -> value
+            value.matches(Regex("\\d+")) -> "${value}px"
+            else -> value
+        }
+    }
+    
+    /**
+     * Parse dimension value
+     */
+    internal fun parseDimension(value: String): String {
+        return when {
+            value.matches(Regex("\\d+")) -> "${value}px"
+            value.matches(Regex("\\d+/\\d+")) -> {
+                val parts = value.split("/")
+                val numerator = parts[0].toDoubleOrNull() ?: 1.0
+                val denominator = parts[1].toDoubleOrNull() ?: 1.0
+                "${(numerator / denominator) * 100}%"
+            }
+            value == "full" -> "100%"
+            value == "screen" -> "100vh"
+            value == "auto" -> "auto"
+            else -> value
+        }
+    }
+    
+    /**
+     * Checks if a character is valid in a Tailwind class name
+     */
+    internal fun isTailwindWordChar(c: Char): Boolean {
+        return c.isLetterOrDigit() || c == '-' || c == ':' || c == '[' || c == ']' || c == '.' || c == '/' || c == '#'
+    }
+    
+    /**
+     * Get HTML for arbitrary value classes like w-[100px]
+     */
+    internal fun getArbitraryValueHtml(className: String): String {
+        val regex = Regex("([\\w-]+)\\[([^\\]]+)\\]")
+        val match = regex.find(className) ?: return "<html><body>Unable to parse arbitrary value: $className</body></html>"
+        
+        val (property, value) = match.destructured
+        val cssProperty = when (property) {
+            "w" -> "width"
+            "h" -> "height"
+            "m" -> "margin"
+            "p" -> "padding"
+            "bg" -> "background-color"
+            "text" -> "color"
+            "border" -> "border-color"
+            "rounded" -> "border-radius"
+            else -> property
+        }
+        
+        val categoryIcon = getCategoryIcon(property)
+        val description = getDescriptionForPrefix(property, value)
+        val cssHtml = """
+            <table class="sections">
+                <tr>
+                    <td valign="top"><p>CSS:</p></td>
+                    <td valign="top">
+                        <p><code>.${className} { ${cssProperty}: ${value}; }</code></p>
+                    </td>
+                </tr>
+            </table>
+        """.trimIndent()
+        
+        val versionInfo = if (isTailwindV4Class(className)) {
+            " <span class='grayed'>[Tailwind v4]</span>"
+        } else ""
+        
+        val variantHtml = if (className.contains(":")) {
+            val parts = className.split(":")
+            val variant = parts.first()
+            val baseClass = parts.last()
+            
+            val variantDescription = when (variant) {
+                "hover" -> "Applied when the element is hovered"
+                "focus" -> "Applied when the element has focus"
+                "active" -> "Applied when the element is active"
+                "disabled" -> "Applied when the element is disabled"
+                "sm" -> "Applied at small screen sizes (640px and above)"
+                "md" -> "Applied at medium screen sizes (768px and above)"
+                "lg" -> "Applied at large screen sizes (1024px and above)"
+                "xl" -> "Applied at extra large screen sizes (1280px and above)"
+                "2xl" -> "Applied at 2x extra large screen sizes (1536px and above)"
+                "dark" -> "Applied in dark mode"
+                else -> "Applied in $variant state"
+            }
+            
+            """
+            <div style="margin-top: 12px; padding: 8px; background-color: #f0f9ff; border-radius: 4px; border-left: 3px solid #3b82f6;">
+                <div style="font-weight: bold;">Variant: <code>$variant</code></div>
+                <div style="margin-top: 4px;">$variantDescription</div>
+                <div style="margin-top: 4px;">Base class: <code>$baseClass</code></div>
+            </div>
+            """
+        } else ""
+        
+        val visualExampleHtml = when {
+            property == "z" && value.isNotEmpty() -> {
+                """
+                <table class="sections">
+                    <tr>
+                        <td valign="top"><p>Example:</p></td>
+                        <td valign="top">
+                            <div style="position: relative; height: 50px; width: 140px; background: #eee;">
+                                <div style="position: absolute; top: 5px; left: 5px; width: 30px; height: 30px; background-color: #ef4444; z-index: 0; text-align: center; line-height: 30px; color: white;">0</div>
+                                <div style="position: absolute; top: 15px; left: 25px; width: 30px; height: 30px; background-color: #3b82f6; z-index: ${value}; text-align: center; line-height: 30px; color: white;">${value}</div>
+                                <div style="position: absolute; top: 25px; left: 45px; width: 30px; height: 30px; background-color: #10b981; z-index: 20; text-align: center; line-height: 30px; color: white;">20</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                """
+            }
+            (className == "flex" || className.startsWith("flex-")) -> {
+                """
+                <table class="sections">
+                    <tr>
+                        <td valign="top"><p>Example:</p></td>
+                        <td valign="top">
+                            <div style="display: flex; background: #eee; width: 200px;">
+                                <div style="background-color: #3b82f6; color: white; padding: 3px; margin: 3px; font-size: 11px;">Item 1</div>
+                                <div style="background-color: #3b82f6; color: white; padding: 3px; margin: 3px; font-size: 11px;">Item 2</div>
+                                <div style="background-color: #3b82f6; color: white; padding: 3px; margin: 3px; font-size: 11px;">Item 3</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                """
+            }
+            (className == "grid" || className.startsWith("grid-")) -> {
+                """
+                <table class="sections">
+                    <tr>
+                        <td valign="top"><p>Example:</p></td>
+                        <td valign="top">
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: #eee; width: 100px; height: 100px;">
+                                <div style="background-color: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px;">1</div>
+                                <div style="background-color: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px;">2</div>
+                                <div style="background-color: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px;">3</div>
+                                <div style="background-color: #3b82f6; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px;">4</div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                """
+            }
+            else -> ""
+        }
+        
+        val relatedClasses = findRelatedClasses(className)
+        val relatedHtml = if (relatedClasses.isNotEmpty()) {
+            val links = relatedClasses.joinToString(", ") { "<code>$it</code>" }
+            """
+            <table class="sections">
+                <tr>
+                    <td valign="top"><p>Related:</p></td>
+                    <td valign="top">
+                        <p>$links</p>
+                    </td>
+                </tr>
+            </table>
+            """
+        } else ""
+        
+        return """
+            <html>
+                <head>
+                    <style>
+                        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13px; }
+                        pre { font-family: monospace; }
+                        code { font-family: monospace; white-space: nowrap; }
+                        p { margin: 5px 0; }
+                        .title { font-weight: bold; font-size: 14px; margin-bottom: 6px; }
+                        .sections { margin-top: 8px; border-spacing: 0; }
+                        .sections td { padding: 3px; vertical-align: top; }
+                        .sections td:first-child { color: #787878; white-space: nowrap; padding-right: 10px; }
+                        .grayed { color: #787878; }
+                    </style>
+                </head>
+                <body>
+                    <div class='title'>$className $versionInfo</div>
+                    <div>$description</div>
+                    $cssHtml
+                    $visualExampleHtml
+                    $variantHtml
+                    $relatedHtml
+                </body>
+            </html>
+        """.trimIndent()
+    }
+    
+    /**
+     * This method is critical for hovering documentation.
+     * It's called before any other documentation method to identify what element should receive documentation.
+     */
+    override fun getCustomDocumentationElement(editor: com.intellij.openapi.editor.Editor, file: com.intellij.psi.PsiFile, contextElement: PsiElement?, targetOffset: Int): PsiElement? {
+        try {
+            logger.debug("getCustomDocumentationElement called for ${file.name} at offset $targetOffset")
+            
+            // Skip if contextElement is null
+            if (contextElement == null) {
+                logger.debug("Context element is null, exiting")
+                return null
+            }
+            
+            // Extract text around cursor for debugging
+            val document = editor.document
+            val lineNumber = document.getLineNumber(targetOffset)
+            val lineStart = document.getLineStartOffset(lineNumber)
+            val lineEnd = document.getLineEndOffset(lineNumber)
+            val lineText = document.getText(com.intellij.openapi.util.TextRange(lineStart, lineEnd))
+            logger.debug("Line $lineNumber: $lineText")
+            
+            // Look for a class/className attribute or string that contains Tailwind classes
+            var elementToCheck = contextElement
+            var depth = 0
+            val maxDepth = 5 // Prevent infinite loops
+            
+            // Check the element and its parents for Tailwind classes
+            while (elementToCheck != null && depth < maxDepth) {
+                // Debug info
+                logger.debug("Checking element: ${elementToCheck.javaClass.simpleName}, text: '${elementToCheck.text.take(30)}'")
+                
+                // Check for class or className attributes
+                val isClassAttribute = (elementToCheck is XmlAttributeValue && 
+                    (elementToCheck.parent as? XmlAttribute)?.name?.lowercase() in listOf("class", "classname"))
+                    
+                // Check for JSX className attribute
+                val isJsxClassName = elementToCheck.text.contains("className=") ||
+                    elementToCheck.parent?.text?.contains("className=") == true
+                    
+                logger.debug("Is class attribute: $isClassAttribute, Is JSX className: $isJsxClassName")
+                
+                // Extract potential Tailwind class
+                val className = extractClassName(elementToCheck, contextElement)
+                logger.debug("Extracted class name: $className")
+                
+                if (className != null && isTailwindPattern(className, file.project)) {
+                    logger.debug("Found Tailwind class: $className")
+                    // Store the class name in user data for later retrieval
+                    elementToCheck.putUserData(TAILWIND_CLASS_KEY, className)
+                    return elementToCheck
+                }
+                
+                // Check parent
+                elementToCheck = elementToCheck.parent
+                depth++
+            }
+            
+            logger.debug("No Tailwind class found")
+            return null
+        } catch (e: Exception) {
+            logger.error("Error in getCustomDocumentationElement: ${e.message}")
+            return null
+        }
+    }
+    
     /**
      * Override getQuickNavigateInfo to ensure Tailwind documentation is prioritized
      * This method is called first for quick documentation display
      */
     override fun getQuickNavigateInfo(element: PsiElement?, originalElement: PsiElement?): String? {
+        // Check if we've previously identified a Tailwind class in this element
+        val tailwindClass = element?.getUserData(TAILWIND_CLASS_KEY)
+        if (tailwindClass != null) {
+            logger.debug("Found Tailwind class in user data: $tailwindClass")
+            return generateDocForClass(tailwindClass, element.project)
+        }
+        
         return generateTailwindDoc(element, originalElement)
     }
     
+    /**
+     * Main documentation generation method
+     */
     override fun generateDoc(element: PsiElement?, originalElement: PsiElement?): String? {
+        // Check if we've previously identified a Tailwind class in this element
+        val tailwindClass = element?.getUserData(TAILWIND_CLASS_KEY)
+        if (tailwindClass != null) {
+            logger.debug("Found Tailwind class in user data: $tailwindClass")
+            return generateDocForClass(tailwindClass, element.project)
+        }
+        
         return generateTailwindDoc(element, originalElement)
     }
     
     /**
      * Generate Tailwind documentation with high priority
      */
-    private fun generateTailwindDoc(element: PsiElement?, originalElement: PsiElement?): String? {
+    internal fun generateTailwindDoc(element: PsiElement?, originalElement: PsiElement?): String? {
         if (element == null) return null
 
         try {
@@ -67,7 +375,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
                 if (tailwindClasses.contains(className)) {
                     try {
                         // Found in Tailwind classes - generate rich documentation with enhanced content
-                        val richDoc = createRichDocumentation(className, project)
+                        val richDoc = generateDocForClass(className, project)
                         // Combine both documentations with enhanced content first
                         return enhancedDoc + "<hr/>" + richDoc
                     } catch (e: Exception) {
@@ -94,7 +402,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Check if a class name follows Tailwind naming patterns
      */
-    private fun isTailwindPattern(className: String): Boolean {
+    internal fun isTailwindPattern(className: String, project: Project? = null): Boolean {
         // Common Tailwind prefixes
         val tailwindPrefixes = listOf(
             "bg-", "text-", "font-", "border-", "rounded-", "p-", "m-", "px-", "py-", "mx-", "my-",
@@ -148,59 +456,72 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Extract class name from the PsiElement
      */
-    private fun extractClassName(element: PsiElement, originalElement: PsiElement?): String? {
-        logger.info("Extracting class name from element: ${element.text}")
+    internal fun extractClassName(element: PsiElement?, originalElement: PsiElement?): String? {
+        logger.info("Extracting class name from element: ${element?.text}")
+        
+        if (element == null) return null
         
         try {
             return when {
-                element is XmlAttributeValue -> {
-                    // Check if it's a class attribute
-                    val attributeName = element.parent?.firstChild?.text
-                    if (attributeName != "class" && attributeName != "className") return null
+                // If it's a class attribute in XML/HTML
+                element is XmlAttributeValue && element.parent is XmlAttribute -> {
+                    val attr = element.parent as XmlAttribute
+                    val attrName = attr.name.lowercase()
                     
-                    // Get the cursor position if available
-                    val cursorOffset = originalElement?.let {
-                        it.textRange.startOffset - element.textRange.startOffset
-                    } ?: 0
-                    
-                    // Find the class at cursor
-                    findClassAtCursor(element.value, cursorOffset)
-                }
-                element.parent is XmlAttributeValue -> {
-                    val attributeValue = element.parent as XmlAttributeValue
-                    // Check if it's a class attribute
-                    val attributeName = attributeValue.parent?.firstChild?.text
-                    if (attributeName != "class" && attributeName != "className") return null
-                    
-                    // Get the cursor position relative to the parent
-                    val cursorOffset = originalElement?.let {
-                        it.textRange.startOffset - attributeValue.textRange.startOffset
-                    } ?: 0
-                    
-                    // Find the class at cursor using the parent's value
-                    findClassAtCursor(attributeValue.value, cursorOffset)
-                }
-                element.text.contains(" ") -> {
-                    // This might be a text node with multiple classes
-                    val text = element.text.trim().removeSurrounding("\"")
-                    val cursorOffset = originalElement?.let {
-                        it.textRange.startOffset - element.textRange.startOffset
-                    } ?: 0
-                    
-                    // Find the specific class at cursor
-                    findClassAtCursor(text, cursorOffset)
-                }
-                else -> {
-                    // This might be a single class
-                    val candidateClass = element.text.trim().removeSurrounding("\"")
-                    
-                    // Only return if it looks like a valid Tailwind class (not an empty string or just whitespace)
-                    if (candidateClass.isNotEmpty() && !candidateClass.all { it.isWhitespace() }) {
-                        candidateClass
+                    if (attrName == "class" || attrName == "classname") {
+                        val text = element.value.trim()
+                        val offset = originalElement?.textOffset?.minus(element.textRange.startOffset) ?: 0
+                        findClassAtCursor(text, offset.toInt())
                     } else {
                         null
                     }
                 }
+                
+                // JSX className attribute
+                element is com.intellij.psi.PsiLanguageInjectionHost && element.parent?.text?.contains("className=") == true -> {
+                    val text = element.text.trim().removeSurrounding("'").removeSurrounding("\"").trim()
+                    // Get cursor position relative to this element
+                    val offset = originalElement?.textOffset?.minus(element.textRange.startOffset) ?: 0
+                    findClassAtCursor(text, offset.toInt())
+                }
+                
+                // For plain strings (like in JavaScript)
+                element.text.startsWith("\"") || element.text.startsWith("'") -> {
+                    // If this looks like a quoted string containing a class name
+                    val text = element.text.trim().removeSurrounding("'").removeSurrounding("\"").trim()
+                    if (text.contains(" ")) {
+                        val offset = originalElement?.textOffset?.minus(element.textRange.startOffset) ?: 0
+                        // If there are spaces, try to find the class at cursor position
+                        findClassAtCursor(text, offset.toInt() - 1) // -1 to account for opening quote
+                    } else if (isTailwindPattern(text, element.project)) {
+                        // Single word that matches Tailwind pattern
+                        text
+                    } else null
+                }
+                
+                // Create an instance for JSP-like templates
+                element is com.intellij.psi.xml.XmlToken && element.text.startsWith("class=") -> {
+                    val attrValue = element.text.substring(6).trim().removeSurrounding("\"").removeSurrounding("'")
+                    val offset = originalElement?.textOffset?.minus(element.textRange.startOffset) ?: 0
+                    findClassAtCursor(attrValue, offset.toInt() - 6) // -6 for 'class=' prefix
+                }
+                
+                // Embedded styles and other contexts
+                element.parent?.text?.contains("class") == true || element.parent?.text?.contains("className") == true -> {
+                    val text = element.text.trim().removePrefix("class=").removePrefix("className=").trim()
+                    val cleanText = text.removeSurrounding("\"").removeSurrounding("'")
+                    if (cleanText.contains(" ")) {
+                        // Multi-class situation, find the one at cursor
+                        val offset = originalElement?.textOffset?.minus(element.textRange.startOffset) ?: 0
+                        findClassAtCursor(cleanText, offset.toInt())
+                    } else if (cleanText.isNotEmpty()) {
+                        cleanText
+                    } else {
+                        null
+                    }
+                }
+                
+                else -> null
             }
         } catch (e: Exception) {
             logger.error("Error extracting class name", e)
@@ -211,81 +532,63 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Creates rich documentation for a Tailwind class using class data
      */
-    private fun createRichDocumentation(className: String, project: Project): String {
+    internal fun generateDocForClass(className: String, project: Project): String? {
         try {
             // Get enriched class data if possible
             val classDataMap = TailwindUtils.getTailwindClassData(project)
-            val classData = classDataMap[className]
-            val docJSON = classData?.optJSONObject("documentation") ?: return generateBasicDocumentation(className)
-            
-            logger.info("Tailwind class found: $className")
-            val description = docJSON.optString("description", "Tailwind CSS class")
-            val category = docJSON.optString("type", "utility")
-            val icon = docJSON.optString("icon", getCategoryIcon(extractPrefixAndValue(className).first))
-            
-            // Build color preview if available
-            val colorHtml = if (docJSON.has("color")) {
-                val color = docJSON.getString("color")
-                val textColor = getContrastingTextColor(color)
-                val colorStyle = when {
-                    className.startsWith("bg-") -> "background-color: $color; color: $textColor;"
-                    className.startsWith("text-") -> "color: $color; background-color: #f3f4f6;"
-                    className.startsWith("border-") -> "border: 2px solid $color; background-color: transparent;"
-                    else -> "background-color: $color; color: $textColor;"
-                }
+            val classDataJson = classDataMap[className]
+            if (classDataJson != null) {
+                val docJSON = JSONObject(classDataJson.toString()).optJSONObject("documentation") ?: return generateBasicDocumentation(className)
                 
-                """
-                <div style="margin-bottom: 12px;">
-                    <div style="font-weight: bold; margin-bottom: 4px;">Color Preview:</div>
-                    <div style="display: flex; align-items: center;">
-                        <div style="display: inline-block; width: 24px; height: 24px; ${colorStyle} border-radius: 4px; margin-right: 8px; vertical-align: middle;"></div>
-                        <span><code>$color</code></span>
+                logger.info("Tailwind class found: $className")
+                val description = docJSON.optString("description", "Tailwind CSS class")
+                val category = docJSON.optString("type", "utility")
+                val icon = docJSON.optString("icon", getCategoryIcon(extractPrefixAndValue(className).first))
+                
+                // Build color preview if available
+                val colorHtml = if (docJSON.has("color")) {
+                    val color = docJSON.getString("color")
+                    val textColor = getContrastingTextColor(color)
+                    val colorStyle = when {
+                        className.startsWith("bg-") -> "background-color: $color; color: $textColor;"
+                        className.startsWith("text-") -> "color: $color; background-color: #f3f4f6;"
+                        className.startsWith("border-") -> "border: 2px solid $color; background-color: transparent;"
+                        else -> "background-color: $color; color: $textColor;"
+                    }
+                    
+                    """
+                    <div style="margin-bottom: 12px;">
+                        <div style="font-weight: bold; margin-bottom: 4px;">Color Preview:</div>
+                        <div style="margin-bottom: 10px; display: flex; align-items: center;">
+                            <div style="display: inline-block; width: 24px; height: 24px; ${colorStyle} border-radius: 4px; margin-right: 8px; vertical-align: middle;"></div>
+                            <span><code>$color</code></span>
+                        </div>
                     </div>
-                </div>
-                """
-            } else ""
-            
-            // Get CSS property if available
-            val cssPropertyHtml = if (docJSON.has("cssProperty")) {
-                val cssProperty = docJSON.getString("cssProperty")
-                val cssValue = docJSON.optString("cssValue", "")
+                    """
+                } else ""
                 
-                // Check if we have multiple properties (comma-separated)
-                val properties = cssProperty.split(",").map { it.trim() }
-                val values = if (cssValue.contains(",")) {
-                    cssValue.split(",").map { it.trim() }
-                } else {
-                    List(properties.size) { cssValue }
-                }
-                
-                val cssLines = StringBuilder()
-                properties.forEachIndexed { index, prop ->
-                    val value = if (index < values.size) values[index] else values.last()
-                    cssLines.append("&nbsp;&nbsp;<span style=\"color: #07a;\">$prop</span>: <span style=\"color: #a67\">$value</span>;<br/>\n")
-                }
-                
-                """
-                <div style="margin-top: 10px; padding: 10px; background-color: #f8f8f8; border-radius: 4px; font-family: monospace;">
-                    <div style="color: #666; font-weight: bold;">Generated CSS:</div>
-                    <div style="margin-top: 5px; color: #333;">
-                        <span style="color: #905;">.${className}</span> {<br/>
-                        $cssLines
-                        }
-                    </div>
-                </div>
-                """
-            } else {
-                // Try to infer CSS properties if not provided
-                val cssProps = inferCssProperties(className)
-                if (cssProps.isNotEmpty()) {
+                // Get CSS property if available
+                val cssPropertyHtml = if (docJSON.has("cssProperty")) {
+                    val cssProperty = docJSON.getString("cssProperty")
+                    val cssValue = docJSON.optString("cssValue", "")
+                    
+                    // Check if we have multiple properties (comma-separated)
+                    val properties = cssProperty.split(",").map { it.trim() }
+                    val values = if (cssValue.contains(",")) {
+                        cssValue.split(",").map { it.trim() }
+                    } else {
+                        List(properties.size) { cssValue }
+                    }
+                    
                     val cssLines = StringBuilder()
-                    cssProps.forEach { (prop, value) ->
+                    properties.forEachIndexed { index, prop ->
+                        val value = if (index < values.size) values[index] else values.last()
                         cssLines.append("&nbsp;&nbsp;<span style=\"color: #07a;\">$prop</span>: <span style=\"color: #a67\">$value</span>;<br/>\n")
                     }
                     
                     """
                     <div style="margin-top: 10px; padding: 10px; background-color: #f8f8f8; border-radius: 4px; font-family: monospace;">
-                        <div style="color: #666; font-weight: bold;">Inferred CSS:</div>
+                        <div style="color: #666; font-weight: bold;">Generated CSS:</div>
                         <div style="margin-top: 5px; color: #333;">
                             <span style="color: #905;">.${className}</span> {<br/>
                             $cssLines
@@ -293,151 +596,173 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
                         </div>
                     </div>
                     """
-                } else ""
-            }
-            
-            // Enhanced version information
-            val versionInfo = if (isTailwindV4Class(className)) {
-                """
-                <div style="display: inline-block; margin-top: 8px; padding: 2px 8px; background-color: #0ea5e9; color: white; font-size: 12px; border-radius: 12px;">
-                    Tailwind v4
-                </div>
-                """
-            } else ""
-            
-            // Check for responsive or state variants
-            val stateHtml = if (className.contains(":") || docJSON.has("state")) {
-                // If it has explicit state information in JSON
-                if (docJSON.has("state")) {
-                    val state = docJSON.getString("state")
-                    val baseClass = docJSON.optString("baseClass", "")
-                    val stateDescription = docJSON.optString("stateDescription", "")
-                    
+                } else {
+                    // Try to infer CSS properties if not provided
+                    val cssProps = inferCssProperties(className)
+                    if (cssProps.isNotEmpty()) {
+                        val cssLines = StringBuilder()
+                        cssProps.forEach { (prop, value) ->
+                            cssLines.append("&nbsp;&nbsp;<span style=\"color: #07a;\">$prop</span>: <span style=\"color: #a67\">$value</span>;<br/>\n")
+                        }
+                        
+                        """
+                        <div style="margin-top: 10px; padding: 10px; background-color: #f8f8f8; border-radius: 4px; font-family: monospace;">
+                            <div style="color: #666; font-weight: bold;">Inferred CSS:</div>
+                            <div style="margin-top: 5px; color: #333;">
+                                <span style="color: #905;">.${className}</span> {<br/>
+                                $cssLines
+                                }
+                            </div>
+                        </div>
+                        """
+                    } else ""
+                }
+                
+                // Enhanced version information
+                val versionInfo = if (isTailwindV4Class(className)) {
                     """
-                    <div style="margin-top: 12px; padding: 8px; background-color: #f0f9ff; border-radius: 4px; border-left: 3px solid #3b82f6;">
-                        <div style="font-weight: bold;">Variant: <code>$state</code></div>
-                        <div style="margin-top: 4px;">$stateDescription</div>
-                        <div style="margin-top: 4px;">Applied to: <code>$baseClass</code></div>
-                    </div>
-                    """
-                } 
-                // Infer variant information from the class name
-                else if (className.contains(":")) {
-                    val parts = className.split(":")
-                    val variant = parts.first()
-                    val baseClass = parts.last()
-                    
-                    val variantDescription = when (variant) {
-                        "hover" -> "Applied when the element is hovered"
-                        "focus" -> "Applied when the element has focus"
-                        "active" -> "Applied when the element is active"
-                        "disabled" -> "Applied when the element is disabled"
-                        "sm" -> "Applied at small screen sizes (640px and above)"
-                        "md" -> "Applied at medium screen sizes (768px and above)"
-                        "lg" -> "Applied at large screen sizes (1024px and above)"
-                        "xl" -> "Applied at extra large screen sizes (1280px and above)"
-                        "2xl" -> "Applied at 2x extra large screen sizes (1536px and above)"
-                        "dark" -> "Applied in dark mode"
-                        else -> "Applied in $variant state"
-                    }
-                    
-                    """
-                    <div style="margin-top: 12px; padding: 8px; background-color: #f0f9ff; border-radius: 4px; border-left: 3px solid #3b82f6;">
-                        <div style="font-weight: bold;">Variant: <code>$variant</code></div>
-                        <div style="margin-top: 4px;">$variantDescription</div>
-                        <div style="margin-top: 4px;">Base class: <code>$baseClass</code></div>
+                    <div style="display: inline-block; margin-top: 8px; padding: 2px 8px; background-color: #0ea5e9; color: white; font-size: 12px; border-radius: 12px;">
+                        Tailwind v4
                     </div>
                     """
                 } else ""
-            } else ""
-            
-            // Build examples section with improved formatting
-            val examples = docJSON.optJSONArray("examples")
-            val examplesHtml = if (examples != null && examples.length() > 0) {
-                val exampleBuilder = StringBuilder()
-                exampleBuilder.append("""
-                    <div style="margin-top: 12px;">
-                        <div style="font-weight: bold; margin-bottom: 5px;">Examples:</div>
-                        <div style="background-color: #f8f8f8; padding: 10px; border-radius: 4px;">
-                """.trimIndent())
                 
-                for (i in 0 until examples.length()) {
-                    exampleBuilder.append("<code>${examples.getString(i)}</code>")
-                    if (i < examples.length() - 1) {
-                        exampleBuilder.append("<br/>")
+                // Check for responsive or state variants
+                val stateHtml = if (className.contains(":") || docJSON.has("state")) {
+                    // If it has explicit state information in JSON
+                    if (docJSON.has("state")) {
+                        val state = docJSON.getString("state")
+                        val baseClass = docJSON.optString("baseClass", "")
+                        val stateDescription = docJSON.optString("stateDescription", "")
+                        
+                        """
+                        <div style="margin-top: 12px; padding: 8px; background-color: #f0f9ff; border-radius: 4px; border-left: 3px solid #3b82f6;">
+                            <div style="font-weight: bold;">Variant: <code>$state</code></div>
+                            <div style="margin-top: 4px;">$stateDescription</div>
+                            <div style="margin-top: 4px;">Applied to: <code>$baseClass</code></div>
+                        </div>
+                        """
+                    } 
+                    // Infer variant information from the class name
+                    else if (className.contains(":")) {
+                        val parts = className.split(":")
+                        val variant = parts.first()
+                        val baseClass = parts.last()
+                        
+                        val variantDescription = when (variant) {
+                            "hover" -> "Applied when the element is hovered"
+                            "focus" -> "Applied when the element has focus"
+                            "active" -> "Applied when the element is active"
+                            "disabled" -> "Applied when the element is disabled"
+                            "sm" -> "Applied at small screen sizes (640px and above)"
+                            "md" -> "Applied at medium screen sizes (768px and above)"
+                            "lg" -> "Applied at large screen sizes (1024px and above)"
+                            "xl" -> "Applied at extra large screen sizes (1280px and above)"
+                            "2xl" -> "Applied at 2x extra large screen sizes (1536px and above)"
+                            "dark" -> "Applied in dark mode"
+                            else -> "Applied in $variant state"
+                        }
+                        
+                        """
+                        <div style="margin-top: 12px; padding: 8px; background-color: #f0f9ff; border-radius: 4px; border-left: 3px solid #3b82f6;">
+                            <div style="font-weight: bold;">Variant: <code>$variant</code></div>
+                            <div style="margin-top: 4px;">$variantDescription</div>
+                            <div style="margin-top: 4px;">Base class: <code>$baseClass</code></div>
+                        </div>
+                        """
+                    } else ""
+                } else ""
+                
+                // Build examples section with improved formatting
+                val examples = docJSON.optJSONArray("examples")
+                val examplesHtml = if (examples != null && examples.length() > 0) {
+                    val exampleBuilder = StringBuilder()
+                    exampleBuilder.append("""
+                        <div style="margin-top: 12px;">
+                            <div style="font-weight: bold; margin-bottom: 5px;">Examples:</div>
+                            <div style="background-color: #f8f8f8; padding: 10px; border-radius: 4px;">
+                    """.trimIndent())
+                    
+                    for (i in 0 until examples.length()) {
+                        exampleBuilder.append("<code>${examples.getString(i)}</code>")
+                        if (i < examples.length() - 1) {
+                            exampleBuilder.append("<br/>")
+                        }
                     }
+                    
+                    exampleBuilder.append("</div></div>")
+                    exampleBuilder.toString()
+                } else ""
+                
+                // Create a visual example for layout classes
+                val visualExampleHtml = when {
+                    (className == "flex" || className.startsWith("flex-")) && !docJSON.has("examples") -> {
+                        """
+                        <div style="margin-top: 12px;">
+                            <div style="font-weight: bold; margin-bottom: 4px;">Layout Example:</div>
+                            <div style="display: flex; background-color: #f3f4f6; padding: 8px; border-radius: 4px;">
+                                <div style="background-color: #3b82f6; color: white; padding: 4px 8px; margin: 4px; border-radius: 2px;">Item 1</div>
+                                <div style="background-color: #3b82f6; color: white; padding: 4px 8px; margin: 4px; border-radius: 2px;">Item 2</div>
+                                <div style="background-color: #3b82f6; color: white; padding: 4px 8px; margin: 4px; border-radius: 2px;">Item 3</div>
+                            </div>
+                        </div>
+                        """
+                    }
+                    (className == "grid" || className.startsWith("grid-")) && !docJSON.has("examples") -> {
+                        """
+                        <div style="margin-top: 12px;">
+                            <div style="font-weight: bold; margin-bottom: 4px;">Layout Example:</div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background-color: #f3f4f6; padding: 8px; border-radius: 4px;">
+                                <div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 2px; text-align: center;">1</div>
+                                <div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 2px; text-align: center;">2</div>
+                                <div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 2px; text-align: center;">3</div>
+                                <div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 2px; text-align: center;">4</div>
+                            </div>
+                        </div>
+                        """
+                    }
+                    else -> ""
                 }
                 
-                exampleBuilder.append("</div></div>")
-                exampleBuilder.toString()
-            } else ""
-            
-            // Create a visual example for layout classes
-            val visualExampleHtml = when {
-                (className == "flex" || className.startsWith("flex-")) && !docJSON.has("examples") -> {
+                // Related classes
+                val relatedClasses = findRelatedClasses(className)
+                val relatedHtml = if (relatedClasses.isNotEmpty()) {
+                    val links = relatedClasses.joinToString("") { "<code style=\"margin-right: 8px;\">$it</code>" }
                     """
                     <div style="margin-top: 12px;">
-                        <div style="font-weight: bold; margin-bottom: 4px;">Layout Example:</div>
-                        <div style="display: flex; background-color: #f3f4f6; padding: 8px; border-radius: 4px;">
-                            <div style="background-color: #3b82f6; color: white; padding: 4px 8px; margin: 4px; border-radius: 2px;">Item 1</div>
-                            <div style="background-color: #3b82f6; color: white; padding: 4px 8px; margin: 4px; border-radius: 2px;">Item 2</div>
-                            <div style="background-color: #3b82f6; color: white; padding: 4px 8px; margin: 4px; border-radius: 2px;">Item 3</div>
+                        <div style="font-weight: bold; margin-bottom: 4px;">Related Classes:</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                            $links
                         </div>
                     </div>
                     """
-                }
-                (className == "grid" || className.startsWith("grid-")) && !docJSON.has("examples") -> {
-                    """
-                    <div style="margin-top: 12px;">
-                        <div style="font-weight: bold; margin-bottom: 4px;">Layout Example:</div>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background-color: #f3f4f6; padding: 8px; border-radius: 4px;">
-                            <div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 2px; text-align: center;">1</div>
-                            <div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 2px; text-align: center;">2</div>
-                            <div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 2px; text-align: center;">3</div>
-                            <div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 2px; text-align: center;">4</div>
-                        </div>
-                    </div>
-                    """
-                }
-                else -> ""
+                } else ""
+                
+                return """
+                    <html>
+                        <body style="font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+                            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                <span style="font-size: 16px; margin-right: 8px;">$icon</span>
+                                <span style="font-size: 16px; font-weight: bold;">$className</span>
+                                $versionInfo
+                            </div>
+                            <div style="margin-bottom: 10px; color: #374151;">
+                                <span><i>$description</i></span>
+                                <br/>
+                                <span><b>Category:</b> $category</span>
+                            </div>
+                            $colorHtml
+                            $cssPropertyHtml
+                            $visualExampleHtml
+                            $stateHtml
+                            $examplesHtml
+                            $relatedHtml
+                        </body>
+                    </html>
+                """.trimIndent()
+            } else {
+                return generateBasicDocumentation(className)
             }
-            
-            // Related classes
-            val relatedClasses = findRelatedClasses(className)
-            val relatedHtml = if (relatedClasses.isNotEmpty()) {
-                val links = relatedClasses.joinToString("") { "<code style=\"margin-right: 8px;\">$it</code>" }
-                """
-                <div style="margin-top: 12px;">
-                    <div style="font-weight: bold; margin-bottom: 4px;">Related Classes:</div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                        $links
-                    </div>
-                </div>
-                """
-            } else ""
-            
-            return """
-                <html>
-                    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;">
-                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                            <span style="font-size: 16px; margin-right: 8px;">$icon</span>
-                            <span style="font-size: 16px; font-weight: bold;">$className</span>
-                            $versionInfo
-                        </div>
-                        <div style="margin-bottom: 10px; color: #374151;">
-                            <span><i>$description</i></span>
-                            <br/>
-                            <span><b>Category:</b> $category</span>
-                        </div>
-                        $colorHtml
-                        $cssPropertyHtml
-                        $visualExampleHtml
-                        $stateHtml
-                        $examplesHtml
-                        $relatedHtml
-                    </body>
-                </html>
-            """.trimIndent()
         } catch (e: Exception) {
             logger.error("Error creating rich documentation: ${e.message}")
             return generateBasicDocumentation(className)
@@ -447,7 +772,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Find the Tailwind class at the cursor position
      */
-    private fun findClassAtCursor(text: String, cursorOffset: Int): String? {
+    internal fun findClassAtCursor(text: String, cursorOffset: Int): String? {
         logger.info("Finding class at cursor. Text length: ${text.length}, Cursor offset: $cursorOffset")
         
         if (text.isBlank() || cursorOffset < 0 || cursorOffset > text.length) {
@@ -581,11 +906,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
         
         // Add tailwind version badge if applicable
         val versionInfo = if (isTailwindV4Class(className)) {
-            """
-            <div style="display: inline-block; margin-left: 8px; padding: 2px 8px; background-color: #0ea5e9; color: white; font-size: 12px; border-radius: 12px;">
-                Tailwind v4
-            </div>
-            """
+            " <span class='grayed'>[Tailwind v4]</span>"
         } else ""
         
         return """
@@ -609,7 +930,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Extract the prefix and value from a Tailwind class name
      */
-    private fun extractPrefixAndValue(className: String): Pair<String, String> {
+    internal fun extractPrefixAndValue(className: String): Pair<String, String> {
         // Handle variant prefixes (e.g., hover:, focus:, md:)
         val baseClass = if (className.contains(":")) {
             className.split(":").last()
@@ -633,7 +954,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Generate an appropriate icon for a category
      */
-    private fun getCategoryIcon(prefix: String): String {
+    internal fun getCategoryIcon(prefix: String): String {
         return when (prefix) {
             "bg" -> "🎨" // Background
             "text" -> "🔤" // Text
@@ -668,7 +989,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Get description based on the prefix
      */
-    private fun getDescriptionForPrefix(prefix: String, value: String): String {
+    internal fun getDescriptionForPrefix(prefix: String, value: String): String {
         return when (prefix) {
             "bg" -> "Sets the background color to ${prettifyValue(value)}"
             "text" -> if (value.matches(Regex("\\w+\\d+"))) {
@@ -710,7 +1031,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
             "content" -> "Sets align-content to ${prettifyValue(value)}"
             "shadow" -> if (value.isEmpty()) "Adds default shadow" else "Sets shadow to ${prettifyValue(value)}"
             "opacity" -> "Sets opacity to ${prettifyValue(value)}"
-            "z" -> "Sets z-index to ${prettifyValue(value)}"
+            "z" -> "Sets z-index to ${value}"
             "overflow" -> "Sets overflow to ${prettifyValue(value)}"
             "transition" -> if (value.isEmpty()) "Adds default transition" else "Sets transition property to ${prettifyValue(value)}"
             "animate" -> "Applies animation ${prettifyValue(value)}"
@@ -736,7 +1057,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Generate error documentation to show to users when an exception occurs
      */
-    private fun generateErrorDocumentation(message: String, exception: Exception? = null): String {
+    internal fun generateErrorDocumentation(message: String, exception: Exception? = null): String {
         val errorMessage = message.takeIf { it.isNotBlank() } ?: "An error occurred"
         
         val stackTraceHtml = exception?.let {
@@ -771,7 +1092,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Identify if a class name belongs to Tailwind v4
      */
-    private fun isTailwindV4Class(className: String): Boolean {
+    internal fun isTailwindV4Class(className: String): Boolean {
         // This is a simplistic check - in a real implementation you might have a more comprehensive list
         val v4PrefixList = listOf(
             "plc-", // placeholder color classes
@@ -792,7 +1113,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Get contrasting text color for a background
      */
-    private fun getContrastingTextColor(backgroundColor: String): String {
+    internal fun getContrastingTextColor(backgroundColor: String): String {
         // Simple algorithm: for hex colors, calculate brightness and return white for dark backgrounds, black for light
         if (backgroundColor.startsWith("#")) {
             try {
@@ -817,7 +1138,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Extract color value from a Tailwind color class name
      */
-    private fun extractColorValue(className: String): String? {
+    internal fun extractColorValue(className: String): String? {
         // This is a simplified mapping - a real implementation would have a comprehensive color map
         val colorMap = mapOf(
             "red" to "#ef4444",
@@ -850,7 +1171,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     /**
      * Infer CSS properties based on the class name
      */
-    private fun inferCssProperties(className: String): Map<String, String> {
+    internal fun inferCssProperties(className: String): Map<String, String> {
         val properties = mutableMapOf<String, String>()
         val (prefix, value) = extractPrefixAndValue(className)
         
@@ -885,6 +1206,7 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
             "h" -> properties["height"] = parseDimension(value)
             "m" -> properties["margin"] = parseDimension(value)
             "p" -> properties["padding"] = parseDimension(value)
+            "z" -> properties["z-index"] = value
             "mt" -> properties["margin-top"] = parseDimension(value)
             "mb" -> properties["margin-bottom"] = parseDimension(value)
             "ml" -> properties["margin-left"] = parseDimension(value)
@@ -947,29 +1269,9 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
     }
     
     /**
-     * Parse dimension value
-     */
-    private fun parseDimension(value: String): String {
-        return when {
-            value.matches(Regex("\\d+")) -> "${value}px"
-            value.matches(Regex("\\d+/\\d+")) -> {
-                // Handle fractions like 1/2, 3/4, etc.
-                val parts = value.split("/")
-                val numerator = parts[0].toDoubleOrNull() ?: 1.0
-                val denominator = parts[1].toDoubleOrNull() ?: 1.0
-                "${(numerator / denominator) * 100}%"
-            }
-            value == "full" -> "100%"
-            value == "screen" -> "100vh"
-            value == "auto" -> "auto"
-            else -> value
-        }
-    }
-    
-    /**
      * Find related Tailwind classes
      */
-    private fun findRelatedClasses(className: String): List<String> {
+    internal fun findRelatedClasses(className: String): List<String> {
         val (prefix, value) = extractPrefixAndValue(className)
         val related = mutableListOf<String>()
         
@@ -1003,21 +1305,5 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider(), Documenta
         }
         
         return related
-    }
-    
-    /**
-     * Helper function to prettify values for display
-     */
-    private fun prettifyValue(value: String): String {
-        return when {
-            value.isEmpty() -> ""
-            value == "auto" -> "auto"
-            value.matches(Regex("\\d+")) -> "${value}px"
-            value.matches(Regex("\\d+/\\d+")) -> {
-                val parts = value.split("/")
-                "${parts[0]}/${parts[1]}"
-            }
-            else -> value
-        }
     }
 }

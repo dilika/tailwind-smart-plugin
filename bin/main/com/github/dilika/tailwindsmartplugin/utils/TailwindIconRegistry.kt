@@ -55,73 +55,48 @@ object TailwindIconRegistry {
         // Extract the base class name without variants (hover:, md:, etc.)
         val baseClass = className.split(":").last()
         
-        // Gérer spécialement les classes de type couleur (text-, bg-, border-, etc.)
+        // Handle color-related Tailwind classes with safe error handling
         if (isColorClass(baseClass)) {
             try {
-                val colorValue = extractColorValue(baseClass)
-                if (colorValue != null) {
-                    // Créer une icône spécifique selon le type de classe
-                    val icon = when {
-                        baseClass.startsWith("text-") || baseClass.startsWith("font-") -> {
-                            // Utiliser TextColorIcon pour un "T" directement coloré sans fond
-                            TextColorIcon(colorValue, size)
-                        }
-                        baseClass.startsWith("border-") -> {
-                            // Pour les bordures, utiliser une icône spécifique avec un cadre
-                            BorderColorIcon(colorValue, size)
-                        }
-                        baseClass.startsWith("bg-") -> {
-                            // Pour les fonds, utiliser une icône remplie
-                            BackgroundColorIcon(colorValue, size)
-                        }
-                        else -> {
-                            // Pour les autres types, utiliser une icône générique
-                            createColorIcon(colorValue, size)
-                        }
-                    }
-                    iconCache[cacheKey] = icon
-                    return icon
-                } else {
-                    // Fallback en cas d'absence de couleur extraite
-                    val (category, defaultColor) = TailwindCategoryUtils.getCategoryAndColor(baseClass)
-                    
-                    // Créer une icône spécifique selon le type de classe
-                    val icon = when {
-                        baseClass.startsWith("text-") || baseClass.startsWith("font-") -> {
-                            TextColorIcon(defaultColor, size)
-                        }
-                        baseClass.startsWith("border-") -> {
-                            BorderColorIcon(defaultColor, size)
-                        }
-                        baseClass.startsWith("bg-") -> {
-                            BackgroundColorIcon(defaultColor, size)
-                        }
-                        else -> {
-                            createColorIcon(defaultColor, size)
-                        }
-                    }
-                    iconCache[cacheKey] = icon
-                    return icon
+                // Get default category/color as a fallback
+                val defaultCategory = TailwindCategoryUtils.getCategoryAndColor(baseClass)
+                val defaultColor = defaultCategory.second
+                
+                // Try to extract the specific color, using default as fallback
+                val colorValue = extractColorValue(baseClass) ?: defaultColor
+                
+                // Create appropriate icon based on class type
+                val icon = when {
+                    baseClass.startsWith("text-") || baseClass.startsWith("font-") -> 
+                        TextColorIcon(colorValue, size)
+                    baseClass.startsWith("border-") -> 
+                        BorderColorIcon(colorValue, size)
+                    baseClass.startsWith("bg-") -> 
+                        BackgroundColorIcon(colorValue, size)
+                    else -> 
+                        createColorIcon(colorValue, size)
                 }
+                
+                // Cache and return the created icon
+                iconCache[cacheKey] = icon
+                return icon
             } catch (e: Exception) {
-                // Fallback en cas d'erreur
+                // Simple fallback with safe default color on any error
                 val defaultColor = JBColor(0x64748B, 0x94A3B8) // slate-500/400
                 
-                // Créer une icône spécifique selon le type de classe, même en cas d'erreur
+                // Create an appropriate icon using the default color
                 val icon = when {
-                    baseClass.startsWith("text-") || baseClass.startsWith("font-") -> {
+                    baseClass.startsWith("text-") || baseClass.startsWith("font-") -> 
                         TextColorIcon(defaultColor, size)
-                    }
-                    baseClass.startsWith("border-") -> {
+                    baseClass.startsWith("border-") -> 
                         BorderColorIcon(defaultColor, size)
-                    }
-                    baseClass.startsWith("bg-") -> {
+                    baseClass.startsWith("bg-") -> 
                         BackgroundColorIcon(defaultColor, size)
-                    }
-                    else -> {
+                    else -> 
                         createColorIcon(defaultColor, size)
-                    }
                 }
+                
+                // Cache and return the fallback icon
                 iconCache[cacheKey] = icon
                 return icon
             }

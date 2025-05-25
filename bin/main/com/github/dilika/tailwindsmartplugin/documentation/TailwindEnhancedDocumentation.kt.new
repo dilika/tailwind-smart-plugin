@@ -1,0 +1,211 @@
+package com.github.dilika.tailwindsmartplugin.documentation
+
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * Provides enhanced documentation for Tailwind classes with rich interactive examples, 
+ * visual previews, complete CSS equivalents, and responsive variants information.
+ * 
+ * This documentation provider is designed to offer a premium documentation experience
+ * comparable to or better than the official Tailwind CSS plugin for IntelliJ.
+ */
+class TailwindEnhancedDocumentation {
+    private val logger = Logger.getInstance(TailwindEnhancedDocumentation::class.java)
+    
+    // Cache for documentation to improve performance
+    private val documentationCache = ConcurrentHashMap<String, String>()
+    
+    /**
+     * Generates enhanced documentation for a Tailwind class
+     * with interactive examples and visual previews
+     */
+    fun generateDocumentation(className: String, project: Project? = null): String {
+        // Check cache first for performance
+        documentationCache[className]?.let {
+            return it
+        }
+        
+        val doc = buildDocumentation(className)
+        documentationCache[className] = doc
+        return doc
+    }
+    
+    /**
+     * Builds rich documentation with interactive examples and visual previews
+     */
+    private fun buildDocumentation(className: String): String {
+        // Split the class name to identify variants and base class
+        val parts = className.split(":")
+        val baseClass = parts.last()
+        val variants = if (parts.size > 1) parts.dropLast(1) else emptyList()
+        
+        // Extract prefix and value for categorization
+        val (prefix, value) = extractPrefixAndValue(baseClass)
+        
+        // Determine category for the class
+        val category = getCategoryForPrefix(prefix)
+        
+        // Get description and CSS value
+        val description = getClassDescription(className)
+        val cssValue = getCssEquivalent(className)
+        
+        // Get examples and previews
+        val example = getClassExample(className)
+        val visualPreview = getVisualPreview(className)
+        
+        // Determine if class is from Tailwind v4
+        val versionBadge = if (isTailwindV4Class(className)) {
+            "<span class='version-badge v4'>Tailwind v4</span>"
+        } else {
+            "<span class='version-badge'>Tailwind v3</span>"
+        }
+        
+        return """
+        <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+                        font-size: 13px;
+                        line-height: 1.5;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    h3 { 
+                        margin-top: 0;
+                        margin-bottom: 12px;
+                        font-size: 16px;
+                        display: flex;
+                        align-items: center;
+                    }
+                    pre, code { 
+                        font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace;
+                        font-size: 12px;
+                    }
+                    pre {
+                        background: #f1f5f9;
+                        padding: 12px;
+                        border-radius: 6px;
+                        overflow-x: auto;
+                    }
+                    .version-badge {
+                        display: inline-block;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-size: 11px;
+                        font-weight: 500;
+                        background: #cbd5e1;
+                        color: #0f172a;
+                        margin-left: 8px;
+                    }
+                    .version-badge.v4 {
+                        background: #818cf8;
+                        color: white;
+                    }
+                    .category-badge {
+                        display: inline-flex;
+                        align-items: center;
+                        padding: 3px 6px;
+                        border-radius: 4px;
+                        font-size: 11px;
+                        font-weight: 500;
+                        margin-left: 8px;
+                        background: #e0f2fe;
+                        color: #0369a1;
+                    }
+                    .css-section {
+                        margin: 16px 0;
+                        background: #f8fafc;
+                        border-radius: 6px;
+                        border: 1px solid #e2e8f0;
+                        overflow: hidden;
+                    }
+                    .css-section h4 {
+                        margin: 0;
+                        padding: 10px 12px;
+                        background: #f8fafc;
+                        border-bottom: 1px solid #e2e8f0;
+                        font-weight: 500;
+                    }
+                    .example-section {
+                        margin: 16px 0;
+                        border: 1px solid #e2e8f0;
+                        border-radius: 6px;
+                        overflow: hidden;
+                    }
+                    .example-section h4 {
+                        margin: 0;
+                        padding: 10px 12px;
+                        background: #f8fafc;
+                        border-bottom: 1px solid #e2e8f0;
+                        font-weight: 500;
+                    }
+                    .example-content {
+                        padding: 16px;
+                    }
+                    .visual-preview {
+                        margin: 16px 0;
+                        background: #f1f5f9;
+                        border-radius: 6px;
+                        padding: 16px;
+                        border: 1px solid #e2e8f0;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='tailwind-doc'>
+                    <h3>
+                        ${formatClassName(className)}
+                        $versionBadge
+                        <span class='category-badge'>$category</span>
+                    </h3>
+                    
+                    <p>${description}</p>
+                    
+                    <!-- CSS Equivalent -->
+                    <div class='css-section'>
+                        <h4>CSS Equivalent</h4>
+                        <pre>${cssValue}</pre>
+                    </div>
+                    
+                    <!-- Visual Preview if available -->
+                    ${if (visualPreview.isNotEmpty()) """<div class='visual-preview'>$visualPreview</div>""" else ""}
+                    
+                    <!-- Example if available -->
+                    ${if (example.isNotEmpty()) """
+                    <div class='example-section'>
+                        <h4>Example</h4>
+                        <div class='example-content'>
+                            <pre>${example}</pre>
+                        </div>
+                    </div>
+                    """ else ""}
+                    
+                    <!-- Variant information if present -->
+                    ${if (variants.isNotEmpty()) buildVariantInfo(variants) else ""}
+                </div>
+            </body>
+        </html>
+        """.trimIndent()
+    }
+    
+    /**
+     * Builds variant information HTML
+     */
+    private fun buildVariantInfo(variants: List<String>): String {
+        return buildString {
+            append("<div class='variants-section' style='margin: 16px 0; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;'>")
+            append("<h4 style='margin: 0; padding: 10px 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-weight: 500;'>Variants</h4>")
+            append("<div style='padding: 0;'>")
+            variants.forEach { variant ->
+                append("<div style='padding: 8px 12px; display: flex; border-bottom: 1px solid #e2e8f0;'>")
+                append("<span style='font-weight: 500; min-width: 80px; color: #3b82f6;'>$variant</span>")
+                append("<span style='color: #64748b;'>${getVariantDescription(variant)}</span>")
+                append("</div>")
+            }
+            append("</div>")
+            append("</div>")
+        }
+    }

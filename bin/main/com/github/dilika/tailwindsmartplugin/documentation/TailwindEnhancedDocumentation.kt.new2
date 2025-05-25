@@ -1,0 +1,207 @@
+    /**
+     * Determines the category for a class based on its prefix
+     */
+    private fun getCategoryForPrefix(prefix: String): String {
+        return when {
+            prefix.startsWith("bg") -> "Background"
+            prefix.startsWith("text") -> "Typography"
+            prefix.startsWith("font") -> "Typography"
+            prefix.startsWith("border") -> "Borders"
+            prefix.startsWith("rounded") -> "Borders"
+            prefix.startsWith("p") -> "Spacing"
+            prefix.startsWith("m") -> "Spacing"
+            prefix.startsWith("w") -> "Sizing"
+            prefix.startsWith("h") -> "Sizing"
+            prefix.startsWith("min") -> "Sizing"
+            prefix.startsWith("max") -> "Sizing"
+            prefix.startsWith("flex") -> "Flexbox"
+            prefix.startsWith("grid") -> "Grid"
+            prefix.startsWith("justify") -> "Flexbox"
+            prefix.startsWith("items") -> "Flexbox"
+            prefix.startsWith("overflow") -> "Effects"
+            prefix.startsWith("shadow") -> "Effects"
+            prefix.startsWith("opacity") -> "Effects"
+            prefix.startsWith("transition") -> "Transitions"
+            prefix.startsWith("animation") -> "Transitions"
+            prefix.startsWith("transform") -> "Transforms"
+            prefix.startsWith("rotate") -> "Transforms"
+            prefix.startsWith("scale") -> "Transforms"
+            prefix.startsWith("skew") -> "Transforms"
+            prefix.startsWith("translate") -> "Transforms"
+            prefix.startsWith("focus") -> "Interactivity"
+            prefix.startsWith("hover") -> "Interactivity"
+            prefix.startsWith("active") -> "Interactivity"
+            prefix.startsWith("disabled") -> "Interactivity"
+            prefix.startsWith("group") -> "Interactivity"
+            prefix.startsWith("peer") -> "Interactivity"
+            prefix.startsWith("dark") -> "Dark Mode"
+            prefix.startsWith("lg") -> "Responsive"
+            prefix.startsWith("md") -> "Responsive"
+            prefix.startsWith("sm") -> "Responsive"
+            prefix.startsWith("xl") -> "Responsive"
+            prefix.startsWith("2xl") -> "Responsive"
+            else -> "Other"
+        }
+    }
+    
+    /**
+     * Generates a visual preview HTML for the class
+     */
+    private fun getVisualPreview(className: String): String {
+        val baseClass = className.split(":").last()
+        
+        // Background color preview
+        if (baseClass.startsWith("bg-")) {
+            val colorValue = extractColorValue(baseClass)
+            if (colorValue.isNotEmpty()) {
+                val textColor = if (colorValue == "#ffffff" || colorValue == "white" || 
+                                   colorValue == "#f8fafc" || colorValue == "#f1f5f9") {
+                    "black"
+                } else {
+                    "white"
+                }
+                
+                return """
+                <div style='width: 100%; height: 40px; background-color: $colorValue; 
+                     display: flex; align-items: center; justify-content: center; border-radius: 6px;
+                     color: $textColor; font-weight: 500;'>
+                    $colorValue
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        // Text color preview
+        if (baseClass.startsWith("text-")) {
+            val colorValue = extractColorValue(baseClass)
+            if (colorValue.isNotEmpty()) {
+                return """
+                <div style='width: 100%; display: flex; flex-direction: column; gap: 8px;'>
+                    <div style='color: $colorValue; font-size: 16px; font-weight: 600;'>
+                        Sample Text - $colorValue
+                    </div>
+                    <div style='color: $colorValue; font-size: 13px;'>
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                    </div>
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        // Font size preview
+        if (baseClass.startsWith("text-") && !baseClass.contains("color")) {
+            val sizes = mapOf(
+                "text-xs" to "0.75rem",
+                "text-sm" to "0.875rem",
+                "text-base" to "1rem",
+                "text-lg" to "1.125rem",
+                "text-xl" to "1.25rem",
+                "text-2xl" to "1.5rem",
+                "text-3xl" to "1.875rem",
+                "text-4xl" to "2.25rem",
+                "text-5xl" to "3rem"
+            )
+            
+            val size = sizes[baseClass] ?: return ""
+            
+            if (size.isNotEmpty()) {
+                return """
+                <div style='font-size: $size;'>
+                    Sample Text ($size)
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        // Spacing preview (padding/margin)
+        if (baseClass.startsWith("p-") || baseClass.startsWith("px-") || 
+            baseClass.startsWith("py-") || baseClass.startsWith("pt-") || 
+            baseClass.startsWith("pb-") || baseClass.startsWith("pl-") || 
+            baseClass.startsWith("pr-")) {
+            
+            val value = extractSpacingValue(baseClass)
+            if (value.isNotEmpty()) {
+                val style = when {
+                    baseClass.startsWith("p-") -> "padding: $value;"
+                    baseClass.startsWith("px-") -> "padding-left: $value; padding-right: $value;"
+                    baseClass.startsWith("py-") -> "padding-top: $value; padding-bottom: $value;"
+                    baseClass.startsWith("pt-") -> "padding-top: $value;"
+                    baseClass.startsWith("pb-") -> "padding-bottom: $value;"
+                    baseClass.startsWith("pl-") -> "padding-left: $value;"
+                    baseClass.startsWith("pr-") -> "padding-right: $value;"
+                    else -> ""
+                }
+                
+                return """
+                <div style='background-color: #f1f5f9; width: 100%;'>
+                    <div style='$style; background-color: #e0f2fe; border: 1px dashed #0284c7; 
+                          text-align: center; font-size: 12px;'>
+                        $style
+                    </div>
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        // Border preview
+        if (baseClass.startsWith("border") && !baseClass.contains("color") && !baseClass.contains("opacity")) {
+            val width = when (baseClass) {
+                "border" -> "1px"
+                "border-0" -> "0px"
+                "border-2" -> "2px"
+                "border-4" -> "4px"
+                "border-8" -> "8px"
+                else -> ""
+            }
+            
+            if (width.isNotEmpty()) {
+                return """
+                <div style='border: $width solid #94a3b8; padding: 16px; text-align: center; border-radius: 6px;'>
+                    Border Width: $width
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        // Border radius preview
+        if (baseClass.startsWith("rounded")) {
+            val radius = when (baseClass) {
+                "rounded-none" -> "0px"
+                "rounded-sm" -> "0.125rem"
+                "rounded" -> "0.25rem"
+                "rounded-md" -> "0.375rem"
+                "rounded-lg" -> "0.5rem"
+                "rounded-xl" -> "0.75rem"
+                "rounded-2xl" -> "1rem"
+                "rounded-3xl" -> "1.5rem"
+                "rounded-full" -> "9999px"
+                else -> ""
+            }
+            
+            if (radius.isNotEmpty()) {
+                return """
+                <div style='background-color: #e0f2fe; padding: 16px; text-align: center; 
+                     border-radius: $radius; border: 1px solid #0284c7;'>
+                    Border Radius: $radius
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        return ""
+    }
+    
+    /**
+     * Formats the class name for display
+     */
+    private fun formatClassName(className: String): String {
+        val parts = className.split(":")
+        val baseClass = parts.last()
+        val variants = if (parts.size > 1) parts.dropLast(1) else emptyList()
+        
+        return if (variants.isEmpty()) {
+            baseClass
+        } else {
+            "${variants.joinToString(":")}:<strong>$baseClass</strong>"
+        }
+    }

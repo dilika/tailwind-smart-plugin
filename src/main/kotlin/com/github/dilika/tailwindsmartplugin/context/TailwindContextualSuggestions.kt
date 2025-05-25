@@ -32,6 +32,17 @@ class TailwindContextualSuggestions {
      * Détermine le contexte de suggestion en fonction du préfixe actuel
      */
     fun determineContext(prefix: String): SuggestionContext {
+        // Stub implementations for context detection
+        fun isLayoutContext(prefix: String): Boolean = false
+        fun isTypographyContext(prefix: String): Boolean = false
+        fun isFlexboxContext(prefix: String): Boolean = false
+        fun isGridContext(prefix: String): Boolean = false
+        fun isBorderContext(prefix: String): Boolean = false
+        fun isEffectContext(prefix: String): Boolean = false
+        fun isTransitionContext(prefix: String): Boolean = false
+        fun isVariantContext(prefix: String): Boolean = false
+        fun isArbitraryContext(prefix: String): Boolean = false
+
         return when {
             isColorContext(prefix) -> SuggestionContext.COLOR
             isSizeContext(prefix) -> SuggestionContext.SIZE
@@ -87,6 +98,17 @@ class TailwindContextualSuggestions {
     private fun provideColorSuggestions(result: CompletionResultSet, prefix: String) {
         // Suggestions de couleurs spécifiques au contexte
     }
+    private fun provideSizeSuggestions(result: CompletionResultSet, prefix: String) {}
+    private fun provideLayoutSuggestions(result: CompletionResultSet, prefix: String) {}
+    private fun provideTypographySuggestions(result: CompletionResultSet, prefix: String) {}
+    private fun provideFlexboxSuggestions(result: CompletionResultSet, prefix: String) {}
+    private fun provideGridSuggestions(result: CompletionResultSet, prefix: String) {}
+    private fun provideBorderSuggestions(result: CompletionResultSet, prefix: String) {}
+    private fun provideEffectSuggestions(result: CompletionResultSet, prefix: String) {}
+    private fun provideTransitionSuggestions(result: CompletionResultSet, prefix: String) {}
+    private fun provideVariantSuggestions(result: CompletionResultSet, prefix: String) {}
+    private fun provideArbitrarySuggestions(result: CompletionResultSet, prefix: String) {}
+    private fun provideGeneralSuggestions(result: CompletionResultSet, prefix: String) {}
     
     // Autres méthodes de suggestion...
 }

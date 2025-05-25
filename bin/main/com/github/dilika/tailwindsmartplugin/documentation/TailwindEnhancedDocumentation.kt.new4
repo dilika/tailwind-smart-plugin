@@ -1,0 +1,220 @@
+    /**
+     * Gets interactive example HTML for a class
+     */
+    private fun getInteractiveExample(className: String): String {
+        val baseClass = className.split(":").last()
+        
+        // No interactive examples for now - this is a placeholder for future implementation
+        return ""
+    }
+    
+    /**
+     * Gets related Tailwind classes
+     */
+    private fun getRelatedClasses(className: String): String {
+        val baseClass = className.split(":").last()
+        
+        return when {
+            baseClass.startsWith("bg-") -> "text-, p-, m-, rounded-"
+            baseClass.startsWith("text-") && baseClass.contains("-") -> "bg-, font-, p-"
+            baseClass.startsWith("text-") -> "font-, text-[color], leading-"
+            baseClass.startsWith("font-") -> "text-, tracking-, leading-"
+            baseClass.startsWith("p-") -> "px-, py-, pt-, pb-, pl-, pr-"
+            baseClass.startsWith("m-") -> "mx-, my-, mt-, mb-, ml-, mr-"
+            baseClass.startsWith("w-") -> "h-, min-w-, max-w-"
+            baseClass.startsWith("h-") -> "w-, min-h-, max-h-"
+            baseClass == "flex" -> "flex-row, flex-col, justify-, items-"
+            baseClass == "grid" -> "grid-cols-, gap-, grid-rows-"
+            baseClass.startsWith("border") -> "border-[color], border-[width], rounded-"
+            baseClass.startsWith("rounded") -> "border, overflow-hidden"
+            baseClass.startsWith("shadow") -> "opacity-, z-"
+            else -> ""
+        }
+    }
+    
+    /**
+     * Gets description for a variant
+     */
+    private fun getVariantDescription(variant: String): String {
+        return when (variant) {
+            "hover" -> "Applied when the user hovers over the element with a pointer device"
+            "focus" -> "Applied when the element has focus (e.g., form input)"
+            "active" -> "Applied when the element is being activated by the user (e.g., clicked)"
+            "disabled" -> "Applied when the element is disabled"
+            "visited" -> "Applied when the element (usually a link) has been visited"
+            "first" -> "Applied to the first element among a group of sibling elements"
+            "last" -> "Applied to the last element among a group of sibling elements"
+            "odd" -> "Applied to elements with an odd position among a group of sibling elements"
+            "even" -> "Applied to elements with an even position among a group of sibling elements"
+            "sm" -> "Applied at the small screen breakpoint (640px and above)"
+            "md" -> "Applied at the medium screen breakpoint (768px and above)"
+            "lg" -> "Applied at the large screen breakpoint (1024px and above)"
+            "xl" -> "Applied at the extra large screen breakpoint (1280px and above)"
+            "2xl" -> "Applied at the 2x extra large screen breakpoint (1536px and above)"
+            "dark" -> "Applied when dark mode is enabled"
+            "group-hover" -> "Applied when a parent with the 'group' class is hovered"
+            "peer-hover" -> "Applied when a sibling with the 'peer' class is hovered"
+            "peer-focus" -> "Applied when a sibling with the 'peer' class is focused"
+            else -> "A conditional style variant"
+        }
+    }
+    
+    /**
+     * Gets customization information from the Tailwind config
+     */
+    private fun getCustomizationInfo(className: String, project: Project?): String {
+        // This would normally analyze the Tailwind config file
+        // For now, we return generic customization info
+        
+        val baseClass = className.split(":").last()
+        
+        return when {
+            baseClass.startsWith("bg-") -> 
+                "Colors can be customized in the tailwind.config.js file under the 'theme.colors' section."
+            baseClass.startsWith("text-") && baseClass.contains("-") -> 
+                "Text colors can be customized in the tailwind.config.js file under the 'theme.colors' section."
+            baseClass.startsWith("text-") -> 
+                "Font sizes can be customized in the tailwind.config.js file under the 'theme.fontSize' section."
+            baseClass.startsWith("font-") -> 
+                "Font weights can be customized in the tailwind.config.js file under the 'theme.fontWeight' section."
+            baseClass.startsWith("p-") || baseClass.startsWith("m-") -> 
+                "Spacing values can be customized in the tailwind.config.js file under the 'theme.spacing' section."
+            baseClass.startsWith("w-") || baseClass.startsWith("h-") -> 
+                "Width and height values can be customized in the tailwind.config.js file under the 'theme.width' and 'theme.height' sections."
+            baseClass.startsWith("rounded") -> 
+                "Border radius values can be customized in the tailwind.config.js file under the 'theme.borderRadius' section."
+            baseClass.startsWith("shadow") -> 
+                "Box shadow values can be customized in the tailwind.config.js file under the 'theme.boxShadow' section."
+            else -> ""
+        }
+    }
+    
+    /**
+     * Extract color value from a Tailwind color class name
+     */
+    private fun extractColorValue(className: String): String {
+        val parts = className.split("-")
+        if (parts.size < 2) return ""
+        
+        // Basic colors without shades
+        if (parts.size == 2) {
+            return when (parts[1]) {
+                "black" -> "#000000"
+                "white" -> "#ffffff"
+                "transparent" -> "transparent"
+                "current" -> "currentColor"
+                "red" -> "#ef4444"    // red-500 equivalent
+                "blue" -> "#3b82f6"   // blue-500 equivalent
+                "green" -> "#22c55e"  // green-500 equivalent
+                "yellow" -> "#eab308" // yellow-500 equivalent
+                "gray" -> "#6b7280"   // gray-500 equivalent
+                else -> ""
+            }
+        }
+        
+        // For example: bg-blue-500, text-red-700
+        if (parts.size >= 3) {
+            val colorName = parts[1]
+            val shade = parts[2]
+            
+            // Map common color-shade combinations to hex values
+            return when {
+                colorName == "slate" && shade == "50" -> "#f8fafc"
+                colorName == "slate" && shade == "100" -> "#f1f5f9"
+                colorName == "slate" && shade == "500" -> "#64748b"
+                colorName == "slate" && shade == "900" -> "#0f172a"
+                
+                colorName == "gray" && shade == "50" -> "#f9fafb"
+                colorName == "gray" && shade == "100" -> "#f3f4f6"
+                colorName == "gray" && shade == "500" -> "#6b7280"
+                colorName == "gray" && shade == "900" -> "#111827"
+                
+                colorName == "red" && shade == "50" -> "#fef2f2"
+                colorName == "red" && shade == "100" -> "#fee2e2"
+                colorName == "red" && shade == "500" -> "#ef4444"
+                colorName == "red" && shade == "900" -> "#7f1d1d"
+                
+                colorName == "blue" && shade == "50" -> "#eff6ff"
+                colorName == "blue" && shade == "100" -> "#dbeafe"
+                colorName == "blue" && shade == "500" -> "#3b82f6"
+                colorName == "blue" && shade == "900" -> "#1e3a8a"
+                
+                colorName == "green" && shade == "50" -> "#f0fdf4"
+                colorName == "green" && shade == "100" -> "#dcfce7"
+                colorName == "green" && shade == "500" -> "#22c55e"
+                colorName == "green" && shade == "900" -> "#14532d"
+                
+                else -> ""
+            }
+        }
+        
+        return ""
+    }
+    
+    /**
+     * Extract spacing value from a Tailwind spacing class
+     */
+    private fun extractSpacingValue(className: String): String {
+        val parts = className.split("-")
+        if (parts.size < 2) return ""
+        
+        val value = parts.last()
+        
+        return when (value) {
+            "0" -> "0px"
+            "px" -> "1px"
+            "0.5" -> "0.125rem" // 2px
+            "1" -> "0.25rem"    // 4px
+            "2" -> "0.5rem"     // 8px
+            "3" -> "0.75rem"    // 12px
+            "4" -> "1rem"       // 16px
+            "5" -> "1.25rem"    // 20px
+            "6" -> "1.5rem"     // 24px
+            "8" -> "2rem"       // 32px
+            "10" -> "2.5rem"    // 40px
+            "12" -> "3rem"      // 48px
+            "16" -> "4rem"      // 64px
+            "20" -> "5rem"      // 80px
+            "24" -> "6rem"      // 96px
+            "32" -> "8rem"      // 128px
+            "40" -> "10rem"     // 160px
+            "48" -> "12rem"     // 192px
+            "56" -> "14rem"     // 224px
+            "64" -> "16rem"     // 256px
+            else -> ""
+        }
+    }
+    
+    /**
+     * Extract prefix and value from a class name
+     */
+    private fun extractPrefixAndValue(className: String): Pair<String, String> {
+        // Regular expression to match Tailwind class patterns
+        val regex = """^([a-zA-Z0-9-]+)(?:-(\d+(?:\.\d+)?|[a-zA-Z]+))?(?:\[(.*)\])?$""".toRegex()
+        val match = regex.find(className) ?: return Pair(className, "")
+        
+        val groups = match.groupValues
+        val prefix = groups[1]
+        
+        // Handle arbitrary values like w-[300px]
+        val value = if (groups[2].isNotEmpty()) {
+            groups[2]
+        } else if (groups.size > 3 && groups[3].isNotEmpty()) {
+            groups[3]
+        } else {
+            ""
+        }
+        
+        return Pair(prefix, value)
+    }
+    
+    /**
+     * Determines if a class belongs to Tailwind v4
+     */
+    private fun isTailwindV4Class(className: String): Boolean {
+        return className.startsWith("accent-") || 
+               className.startsWith("backdrop-") ||
+               className.startsWith("border-x-") ||
+               className.startsWith("border-y-")
+    }
+} // End of TailwindEnhancedDocumentation class

@@ -136,6 +136,33 @@
         <!-- Documentation Provider for Tailwind CSS classes -->
         <lang.documentationProvider
                 language="any"
+                order="first"
+                implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider"/>
+                
+        <!-- Register for specific file types to ensure we catch all relevant elements -->
+        <lang.documentationProvider
+                language="HTML"
+                order="first"
+                implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider"/>
+                
+        <lang.documentationProvider
+                language="JavaScript"
+                order="first"
+                implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider"/>
+                
+        <lang.documentationProvider
+                language="TypeScript"
+                order="first"
+                implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider"/>
+                
+        <lang.documentationProvider
+                language="JSX"
+                order="first"
+                implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider"/>
+                
+        <lang.documentationProvider
+                language="TSX"
+                order="first"
                 implementationClass="com.github.dilika.tailwindsmartplugin.documentation.TailwindDocumentationProvider"/>
                 
         <!-- Project startup activity -->

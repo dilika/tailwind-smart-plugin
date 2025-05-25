@@ -1,61 +1,421 @@
 package com.github.dilika.tailwindsmartplugin.documentation
 
-import com.intellij.psi.PsiElement
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Provides enhanced documentation for Tailwind classes
- * with examples and CSS equivalent values
+ * Provides enhanced documentation for Tailwind classes with rich interactive examples, 
+ * visual previews, complete CSS equivalents, and responsive variants information.
+ * 
+ * This documentation provider is designed to offer a premium documentation experience
+ * comparable to or better than the official Tailwind CSS plugin for IntelliJ.
  */
 class TailwindEnhancedDocumentation {
     private val logger = Logger.getInstance(TailwindEnhancedDocumentation::class.java)
     
+    // Cache for documentation to improve performance
+    private val documentationCache = ConcurrentHashMap<String, String>()
+    
     /**
      * Generates enhanced documentation for a Tailwind class
+     * with interactive examples and visual previews
      */
-    fun generateDocumentation(className: String): String {
+    fun generateDocumentation(className: String, project: Project? = null): String {
+        // Check cache first for performance
+        documentationCache[className]?.let {
+            return it
+        }
+        
+        val doc = buildDocumentation(className)
+        documentationCache[className] = doc
+        return doc
+    }
+    
+    /**
+     * Builds rich documentation with interactive examples and visual previews
+     */
+    private fun buildDocumentation(className: String): String {
+        // Split the class name to identify variants and base class
+        val parts = className.split(":")
+        val baseClass = parts.last()
+        val variants = if (parts.size > 1) parts.dropLast(1) else emptyList()
+        
+        // Extract prefix and value for categorization
+        val (prefix, value) = extractPrefixAndValue(baseClass)
+        
+        // Determine category for the class
+        val category = getCategoryForPrefix(prefix)
+        
+        // Get description and CSS value
+        val description = getClassDescription(className)
+        val cssValue = getCssEquivalent(className)
+        
+        // Get examples and previews
+        val example = getClassExample(className)
+        val visualPreview = getVisualPreview(className)
+        
+        // Determine if class is from Tailwind v4
+        val versionBadge = if (isTailwindV4Class(className)) {
+            "<span class='version-badge v4'>Tailwind v4</span>"
+        } else {
+            "<span class='version-badge'>Tailwind v3</span>"
+        }
+        
+        return """
+        <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+                        font-size: 13px;
+                        line-height: 1.5;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    h3 { 
+                        margin-top: 0;
+                        margin-bottom: 12px;
+                        font-size: 16px;
+                        display: flex;
+                        align-items: center;
+                    }
+                    pre, code { 
+                        font-family: 'SF Mono', Monaco, Menlo, Consolas, monospace;
+                        font-size: 12px;
+                    }
+                    pre {
+                        background: #f1f5f9;
+                        padding: 12px;
+                        border-radius: 6px;
+                        overflow-x: auto;
+                    }
+                    .version-badge {
+                        display: inline-block;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-size: 11px;
+                        font-weight: 500;
+                        background: #cbd5e1;
+                        color: #0f172a;
+                        margin-left: 8px;
+                    }
+                    .version-badge.v4 {
+                        background: #818cf8;
+                        color: white;
+                    }
+                    .category-badge {
+                        display: inline-flex;
+                        align-items: center;
+                        padding: 3px 6px;
+                        border-radius: 4px;
+                        font-size: 11px;
+                        font-weight: 500;
+                        margin-left: 8px;
+                        background: #e0f2fe;
+                        color: #0369a1;
+                    }
+                    .css-section {
+                        margin: 16px 0;
+                        background: #f8fafc;
+                        border-radius: 6px;
+                        border: 1px solid #e2e8f0;
+                        overflow: hidden;
+                    }
+                    .css-section h4 {
+                        margin: 0;
+                        padding: 10px 12px;
+                        background: #f8fafc;
+                        border-bottom: 1px solid #e2e8f0;
+                        font-weight: 500;
+                    }
+                    .example-section {
+                        margin: 16px 0;
+                        border: 1px solid #e2e8f0;
+                        border-radius: 6px;
+                        overflow: hidden;
+                    }
+                    .example-section h4 {
+                        margin: 0;
+                        padding: 10px 12px;
+                        background: #f8fafc;
+                        border-bottom: 1px solid #e2e8f0;
+                        font-weight: 500;
+                    }
+                    .example-content {
+                        padding: 16px;
+                    }
+                    .visual-preview {
+                        margin: 16px 0;
+                        background: #f1f5f9;
+                        border-radius: 6px;
+                        padding: 16px;
+                        border: 1px solid #e2e8f0;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='tailwind-doc'>
+                    <h3>
+                        ${formatClassName(className)}
+                        $versionBadge
+                        <span class='category-badge'>$category</span>
+                    </h3>
+                    
+                    <p>${description}</p>
+                    
+                    <!-- CSS Equivalent -->
+                    <div class='css-section'>
+                        <h4>CSS Equivalent</h4>
+                        <pre>${cssValue}</pre>
+                    </div>
+                    
+                    <!-- Visual Preview if available -->
+                    ${if (visualPreview.isNotEmpty()) """<div class='visual-preview'>$visualPreview</div>""" else ""}
+                    
+                    <!-- Example if available -->
+                    ${if (example.isNotEmpty()) """
+                    <div class='example-section'>
+                        <h4>Example</h4>
+                        <div class='example-content'>
+                            <pre>${example}</pre>
+                        </div>
+                    </div>
+                    """ else ""}
+                    
+                    <!-- Variant information if present -->
+                    ${if (variants.isNotEmpty()) buildVariantInfo(variants) else ""}
+                </div>
+            </body>
+        </html>
+        """.trimIndent()
+    }
+    
+    /**
+     * Builds variant information HTML
+     */
+    private fun buildVariantInfo(variants: List<String>): String {
         return buildString {
-            append("<div class='tailwind-doc'>")
-            
-            // Title and description
-            append("<h3>${formatClassName(className)}</h3>")
-            append("<p>${getClassDescription(className)}</p>")
-            
-            // CSS equivalent value
-            val cssValue = getCssEquivalent(className)
-            if (cssValue.isNotEmpty()) {
-                append("<div class='css-equivalent'>")
-                append("<h4>CSS equivalent:</h4>")
-                append("<pre>$cssValue</pre>")
+            append("<div class='variants-section' style='margin: 16px 0; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;'>")
+            append("<h4 style='margin: 0; padding: 10px 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-weight: 500;'>Variants</h4>")
+            append("<div style='padding: 0;'>")
+            variants.forEach { variant ->
+                append("<div style='padding: 8px 12px; display: flex; border-bottom: 1px solid #e2e8f0;'>")
+                append("<span style='font-weight: 500; min-width: 80px; color: #3b82f6;'>$variant</span>")
+                append("<span style='color: #64748b;'>${getVariantDescription(variant)}</span>")
                 append("</div>")
             }
-            
-            // Usage example
-            val example = getClassExample(className)
-            if (example.isNotEmpty()) {
-                append("<div class='example'>")
-                append("<h4>Example:</h4>")
-                append("<pre>$example</pre>")
-                append("</div>")
-            }
-            
+            append("</div>")
             append("</div>")
         }
+    }
+    /**
+     * Determines the category for a class based on its prefix
+     */
+    private fun getCategoryForPrefix(prefix: String): String {
+        return when {
+            prefix.startsWith("bg") -> "Background"
+            prefix.startsWith("text") -> "Typography"
+            prefix.startsWith("font") -> "Typography"
+            prefix.startsWith("border") -> "Borders"
+            prefix.startsWith("rounded") -> "Borders"
+            prefix.startsWith("p") -> "Spacing"
+            prefix.startsWith("m") -> "Spacing"
+            prefix.startsWith("w") -> "Sizing"
+            prefix.startsWith("h") -> "Sizing"
+            prefix.startsWith("min") -> "Sizing"
+            prefix.startsWith("max") -> "Sizing"
+            prefix.startsWith("flex") -> "Flexbox"
+            prefix.startsWith("grid") -> "Grid"
+            prefix.startsWith("justify") -> "Flexbox"
+            prefix.startsWith("items") -> "Flexbox"
+            prefix.startsWith("overflow") -> "Effects"
+            prefix.startsWith("shadow") -> "Effects"
+            prefix.startsWith("opacity") -> "Effects"
+            prefix.startsWith("transition") -> "Transitions"
+            prefix.startsWith("animation") -> "Transitions"
+            prefix.startsWith("transform") -> "Transforms"
+            prefix.startsWith("rotate") -> "Transforms"
+            prefix.startsWith("scale") -> "Transforms"
+            prefix.startsWith("skew") -> "Transforms"
+            prefix.startsWith("translate") -> "Transforms"
+            prefix.startsWith("focus") -> "Interactivity"
+            prefix.startsWith("hover") -> "Interactivity"
+            prefix.startsWith("active") -> "Interactivity"
+            prefix.startsWith("disabled") -> "Interactivity"
+            prefix.startsWith("group") -> "Interactivity"
+            prefix.startsWith("peer") -> "Interactivity"
+            prefix.startsWith("dark") -> "Dark Mode"
+            prefix.startsWith("lg") -> "Responsive"
+            prefix.startsWith("md") -> "Responsive"
+            prefix.startsWith("sm") -> "Responsive"
+            prefix.startsWith("xl") -> "Responsive"
+            prefix.startsWith("2xl") -> "Responsive"
+            else -> "Other"
+        }
+    }
+    
+    /**
+     * Generates a visual preview HTML for the class
+     */
+    private fun getVisualPreview(className: String): String {
+        val baseClass = className.split(":").last()
+        
+        // Background color preview
+        if (baseClass.startsWith("bg-")) {
+            val colorValue = extractColorValue(baseClass)
+            if (colorValue.isNotEmpty()) {
+                val textColor = if (colorValue == "#ffffff" || colorValue == "white" || 
+                                   colorValue == "#f8fafc" || colorValue == "#f1f5f9") {
+                    "black"
+                } else {
+                    "white"
+                }
+                
+                return """
+                <div style='width: 100%; height: 40px; background-color: $colorValue; 
+                     display: flex; align-items: center; justify-content: center; border-radius: 6px;
+                     color: $textColor; font-weight: 500;'>
+                    $colorValue
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        // Text color preview
+        if (baseClass.startsWith("text-")) {
+            val colorValue = extractColorValue(baseClass)
+            if (colorValue.isNotEmpty()) {
+                return """
+                <div style='width: 100%; display: flex; flex-direction: column; gap: 8px;'>
+                    <div style='color: $colorValue; font-size: 16px; font-weight: 600;'>
+                        Sample Text - $colorValue
+                    </div>
+                    <div style='color: $colorValue; font-size: 13px;'>
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                    </div>
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        // Font size preview
+        if (baseClass.startsWith("text-") && !baseClass.contains("color")) {
+            val sizes = mapOf(
+                "text-xs" to "0.75rem",
+                "text-sm" to "0.875rem",
+                "text-base" to "1rem",
+                "text-lg" to "1.125rem",
+                "text-xl" to "1.25rem",
+                "text-2xl" to "1.5rem",
+                "text-3xl" to "1.875rem",
+                "text-4xl" to "2.25rem",
+                "text-5xl" to "3rem"
+            )
+            
+            val size = sizes[baseClass] ?: return ""
+            
+            if (size.isNotEmpty()) {
+                return """
+                <div style='font-size: $size;'>
+                    Sample Text ($size)
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        // Spacing preview (padding/margin)
+        if (baseClass.startsWith("p-") || baseClass.startsWith("px-") || 
+            baseClass.startsWith("py-") || baseClass.startsWith("pt-") || 
+            baseClass.startsWith("pb-") || baseClass.startsWith("pl-") || 
+            baseClass.startsWith("pr-")) {
+            
+            val value = extractSpacingValue(baseClass)
+            if (value.isNotEmpty()) {
+                val style = when {
+                    baseClass.startsWith("p-") -> "padding: $value;"
+                    baseClass.startsWith("px-") -> "padding-left: $value; padding-right: $value;"
+                    baseClass.startsWith("py-") -> "padding-top: $value; padding-bottom: $value;"
+                    baseClass.startsWith("pt-") -> "padding-top: $value;"
+                    baseClass.startsWith("pb-") -> "padding-bottom: $value;"
+                    baseClass.startsWith("pl-") -> "padding-left: $value;"
+                    baseClass.startsWith("pr-") -> "padding-right: $value;"
+                    else -> ""
+                }
+                
+                return """
+                <div style='background-color: #f1f5f9; width: 100%;'>
+                    <div style='$style; background-color: #e0f2fe; border: 1px dashed #0284c7; 
+                          text-align: center; font-size: 12px;'>
+                        $style
+                    </div>
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        // Border preview
+        if (baseClass.startsWith("border") && !baseClass.contains("color") && !baseClass.contains("opacity")) {
+            val width = when (baseClass) {
+                "border" -> "1px"
+                "border-0" -> "0px"
+                "border-2" -> "2px"
+                "border-4" -> "4px"
+                "border-8" -> "8px"
+                else -> ""
+            }
+            
+            if (width.isNotEmpty()) {
+                return """
+                <div style='border: $width solid #94a3b8; padding: 16px; text-align: center; border-radius: 6px;'>
+                    Border Width: $width
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        // Border radius preview
+        if (baseClass.startsWith("rounded")) {
+            val radius = when (baseClass) {
+                "rounded-none" -> "0px"
+                "rounded-sm" -> "0.125rem"
+                "rounded" -> "0.25rem"
+                "rounded-md" -> "0.375rem"
+                "rounded-lg" -> "0.5rem"
+                "rounded-xl" -> "0.75rem"
+                "rounded-2xl" -> "1rem"
+                "rounded-3xl" -> "1.5rem"
+                "rounded-full" -> "9999px"
+                else -> ""
+            }
+            
+            if (radius.isNotEmpty()) {
+                return """
+                <div style='background-color: #e0f2fe; padding: 16px; text-align: center; 
+                     border-radius: $radius; border: 1px solid #0284c7;'>
+                    Border Radius: $radius
+                </div>
+                """.trimIndent()
+            }
+        }
+        
+        return ""
     }
     
     /**
      * Formats the class name for display
      */
     private fun formatClassName(className: String): String {
-        // Class name formatting logic
         val parts = className.split(":")
-        return if (parts.size > 1) {
-            "<span class='variant'>${parts[0]}:</span><span class='utility'>${parts.subList(1, parts.size).joinToString(":")}</span>"
+        val baseClass = parts.last()
+        val variants = if (parts.size > 1) parts.dropLast(1) else emptyList()
+        
+        return if (variants.isEmpty()) {
+            baseClass
         } else {
-            "<span class='utility'>$className</span>"
+            "${variants.joinToString(":")}:<strong>$baseClass</strong>"
         }
     }
-    
     /**
      * Gets the description of a Tailwind class
      */
@@ -63,72 +423,34 @@ class TailwindEnhancedDocumentation {
         val baseClass = className.split(":").last()
         
         return when {
-            // Layout
-            baseClass == "container" -> "Sets a container with a maximum width based on the screen breakpoints."
-            baseClass.startsWith("columns-") -> "Sets the number of columns for a multi-column element."
-            baseClass.startsWith("break-") -> "Controls the line-breaking behavior of an element."
-            
-            // Flexbox
-            baseClass == "flex" -> "Sets a flexible container (display: flex)."
-            baseClass.startsWith("flex-") -> "Configures flexbox properties like direction, wrapping, etc."
-            baseClass.startsWith("justify-") -> "Controls the alignment of items along the main axis."
-            baseClass.startsWith("items-") -> "Controls the alignment of items along the cross axis."
-            
-            // Grid
-            baseClass == "grid" -> "Sets a grid container (display: grid)."
-            baseClass.startsWith("grid-") -> "Configures grid properties like columns, rows, etc."
-            baseClass.startsWith("gap-") -> "Sets the spacing between grid or flexbox elements."
-            
-            // Spacing
-            baseClass.startsWith("p-") || baseClass.startsWith("px-") || baseClass.startsWith("py-") || 
-            baseClass.startsWith("pt-") || baseClass.startsWith("pr-") || baseClass.startsWith("pb-") || baseClass.startsWith("pl-") -> 
-                "Sets the padding (inner spacing) of an element."
-            baseClass.startsWith("m-") || baseClass.startsWith("mx-") || baseClass.startsWith("my-") || 
-            baseClass.startsWith("mt-") || baseClass.startsWith("mr-") || baseClass.startsWith("mb-") || baseClass.startsWith("ml-") -> 
-                "Sets the margin (outer spacing) of an element."
-            
-            // Sizing
+            baseClass.startsWith("bg-") -> "Sets the background color of an element."
+            baseClass.startsWith("text-") && baseClass.contains("-") -> "Sets the text color of an element."
+            baseClass.startsWith("text-") -> "Sets the font size and line height of an element."
+            baseClass.startsWith("font-") -> "Sets the font weight of an element."
+            baseClass.startsWith("p-") -> "Sets padding on all sides of an element."
+            baseClass.startsWith("px-") -> "Sets horizontal (left and right) padding of an element."
+            baseClass.startsWith("py-") -> "Sets vertical (top and bottom) padding of an element."
+            baseClass.startsWith("m-") -> "Sets margin on all sides of an element."
+            baseClass.startsWith("mx-") -> "Sets horizontal (left and right) margin of an element."
+            baseClass.startsWith("my-") -> "Sets vertical (top and bottom) margin of an element."
             baseClass.startsWith("w-") -> "Sets the width of an element."
             baseClass.startsWith("h-") -> "Sets the height of an element."
-            baseClass.startsWith("min-") -> "Sets the minimum size of an element."
-            baseClass.startsWith("max-") -> "Sets the maximum size of an element."
-            
-            // Typography
-            baseClass.startsWith("text-") && !baseClass.contains("[") -> "Sets the text size or color."
-            baseClass.startsWith("font-") -> "Sets the font family or font weight."
-            baseClass.startsWith("leading-") -> "Sets the line height."
-            baseClass.startsWith("tracking-") -> "Sets the letter spacing."
-            
-            // Backgrounds
-            baseClass.startsWith("bg-") && !baseClass.contains("[") -> "Sets the background color or image."
-            baseClass.startsWith("bg-gradient-") -> "Applies a gradient as background."
-            
-            // Borders
-            baseClass.startsWith("border") -> "Sets the borders of an element."
-            baseClass.startsWith("rounded") -> "Sets the border radius."
-            
-            // Effects
-            baseClass.startsWith("shadow") -> "Applies a shadow to an element."
-            baseClass.startsWith("opacity") -> "Sets the opacity of an element."
-            
-            // Transitions & Animation
-            baseClass.startsWith("transition") -> "Configures CSS transitions."
-            baseClass.startsWith("animate") -> "Applies a predefined animation."
-            
-            // Interactivity
-            baseClass.startsWith("cursor") -> "Sets the cursor style."
-            baseClass.startsWith("pointer-events") -> "Controls how an element responds to pointer events."
-            
-            // Arbitrary values
-            baseClass.contains("[") && baseClass.contains("]") -> "Class with custom arbitrary value."
-            
-            // Variants
-            className.contains(":") && !baseClass.contains("[") -> {
-                val variant = className.split(":").first()
-                "Applies conditional styles with the '$variant' variant."
-            }
-            
-            else -> "Tailwind CSS utility class."
+            baseClass.startsWith("min-") -> "Sets the minimum width or height of an element."
+            baseClass.startsWith("max-") -> "Sets the maximum width or height of an element."
+            baseClass.startsWith("flex") -> "Sets how flex items are placed in the flex container."
+            baseClass.startsWith("grid") -> "Creates a grid layout container."
+            baseClass.startsWith("justify-") -> "Sets how flex and grid items are aligned along the main axis."
+            baseClass.startsWith("items-") -> "Sets how flex and grid items are aligned along the cross axis."
+            baseClass.startsWith("border") && !baseClass.contains("radius") -> "Sets the border width and style of an element."
+            baseClass.startsWith("rounded") -> "Sets the border radius of an element."
+            baseClass.startsWith("shadow") -> "Adds box shadow to an element."
+            baseClass.startsWith("opacity") -> "Sets the opacity (transparency) of an element."
+            baseClass.startsWith("transition") -> "Sets the CSS properties to include in transitions."
+            baseClass.startsWith("animate") -> "Applies CSS animations to an element."
+            baseClass.startsWith("scale") -> "Scales an element via CSS transform."
+            baseClass.startsWith("rotate") -> "Rotates an element via CSS transform."
+            baseClass.startsWith("translate") -> "Moves an element via CSS transform."
+            else -> "A Tailwind CSS utility class that applies styling to an element."
         }
     }
     
@@ -139,130 +461,136 @@ class TailwindEnhancedDocumentation {
         val baseClass = className.split(":").last()
         
         return when {
-            // Layout
-            baseClass == "container" -> "width: 100%;\nmax-width: [responsive];"
-            baseClass == "block" -> "display: block;"
-            baseClass == "inline-block" -> "display: inline-block;"
-            baseClass == "inline" -> "display: inline;"
-            baseClass == "hidden" -> "display: none;"
-            
-            // Flexbox
-            baseClass == "flex" -> "display: flex;"
-            baseClass == "inline-flex" -> "display: inline-flex;"
-            baseClass == "flex-row" -> "flex-direction: row;"
-            baseClass == "flex-row-reverse" -> "flex-direction: row-reverse;"
-            baseClass == "flex-col" -> "flex-direction: column;"
-            baseClass == "flex-col-reverse" -> "flex-direction: column-reverse;"
-            baseClass == "flex-wrap" -> "flex-wrap: wrap;"
-            baseClass == "flex-nowrap" -> "flex-wrap: nowrap;"
-            baseClass == "items-center" -> "align-items: center;"
-            baseClass == "items-start" -> "align-items: flex-start;"
-            baseClass == "items-end" -> "align-items: flex-end;"
-            baseClass == "justify-center" -> "justify-content: center;"
-            baseClass == "justify-start" -> "justify-content: flex-start;"
-            baseClass == "justify-end" -> "justify-content: flex-end;"
-            baseClass == "justify-between" -> "justify-content: space-between;"
-            
-            // Grid
-            baseClass == "grid" -> "display: grid;"
-            baseClass == "grid-cols-1" -> "grid-template-columns: repeat(1, minmax(0, 1fr));"
-            baseClass == "grid-cols-2" -> "grid-template-columns: repeat(2, minmax(0, 1fr));"
-            baseClass == "grid-cols-3" -> "grid-template-columns: repeat(3, minmax(0, 1fr));"
-            baseClass == "grid-cols-4" -> "grid-template-columns: repeat(4, minmax(0, 1fr));"
-            
-            // Spacing
-            baseClass == "p-0" -> "padding: 0px;"
-            baseClass == "p-1" -> "padding: 0.25rem; /* 4px */"
-            baseClass == "p-2" -> "padding: 0.5rem; /* 8px */"
-            baseClass == "p-4" -> "padding: 1rem; /* 16px */"
-            baseClass == "px-4" -> "padding-left: 1rem; /* 16px */\npadding-right: 1rem; /* 16px */"
-            baseClass == "py-2" -> "padding-top: 0.5rem; /* 8px */\npadding-bottom: 0.5rem; /* 8px */"
-            
-            baseClass == "m-0" -> "margin: 0px;"
-            baseClass == "m-1" -> "margin: 0.25rem; /* 4px */"
-            baseClass == "m-2" -> "margin: 0.5rem; /* 8px */"
-            baseClass == "m-4" -> "margin: 1rem; /* 16px */"
-            baseClass == "mx-auto" -> "margin-left: auto;\nmargin-right: auto;"
-            
-            // Sizing
-            baseClass == "w-full" -> "width: 100%;"
-            baseClass == "w-auto" -> "width: auto;"
-            baseClass == "w-screen" -> "width: 100vw;"
-            baseClass == "h-full" -> "height: 100%;"
-            baseClass == "h-screen" -> "height: 100vh;"
-            
-            // Typography
+            baseClass.startsWith("bg-") -> {
+                val colorValue = extractColorValue(baseClass)
+                if (colorValue.isNotEmpty()) {
+                    "background-color: $colorValue;"
+                } else {
+                    "background-color: [color-value];"
+                }
+            }
+            baseClass.startsWith("text-") && baseClass.contains("-") -> {
+                val colorValue = extractColorValue(baseClass)
+                if (colorValue.isNotEmpty()) {
+                    "color: $colorValue;"
+                } else {
+                    "color: [color-value];"
+                }
+            }
             baseClass == "text-xs" -> "font-size: 0.75rem; /* 12px */\nline-height: 1rem; /* 16px */"
             baseClass == "text-sm" -> "font-size: 0.875rem; /* 14px */\nline-height: 1.25rem; /* 20px */"
             baseClass == "text-base" -> "font-size: 1rem; /* 16px */\nline-height: 1.5rem; /* 24px */"
             baseClass == "text-lg" -> "font-size: 1.125rem; /* 18px */\nline-height: 1.75rem; /* 28px */"
             baseClass == "text-xl" -> "font-size: 1.25rem; /* 20px */\nline-height: 1.75rem; /* 28px */"
             baseClass == "text-2xl" -> "font-size: 1.5rem; /* 24px */\nline-height: 2rem; /* 32px */"
-            
-            baseClass == "font-bold" -> "font-weight: 700;"
-            baseClass == "font-semibold" -> "font-weight: 600;"
-            baseClass == "font-medium" -> "font-weight: 500;"
-            baseClass == "font-normal" -> "font-weight: 400;"
+            baseClass == "text-3xl" -> "font-size: 1.875rem; /* 30px */\nline-height: 2.25rem; /* 36px */"
+            baseClass == "font-thin" -> "font-weight: 100;"
+            baseClass == "font-extralight" -> "font-weight: 200;"
             baseClass == "font-light" -> "font-weight: 300;"
-            
-            baseClass == "text-center" -> "text-align: center;"
-            baseClass == "text-left" -> "text-align: left;"
-            baseClass == "text-right" -> "text-align: right;"
-            baseClass == "text-justify" -> "text-align: justify;"
-            
-            // Colors (examples)
-            baseClass == "text-white" -> "color: rgb(255 255 255);"
-            baseClass == "text-black" -> "color: rgb(0 0 0);"
-            baseClass == "text-red-500" -> "color: rgb(239 68 68);"
-            baseClass == "text-blue-500" -> "color: rgb(59 130 246);"
-            
-            baseClass == "bg-white" -> "background-color: rgb(255 255 255);"
-            baseClass == "bg-black" -> "background-color: rgb(0 0 0);"
-            baseClass == "bg-red-500" -> "background-color: rgb(239 68 68);"
-            baseClass == "bg-blue-500" -> "background-color: rgb(59 130 246);"
-            
-            // Borders
-            baseClass == "border" -> "border-width: 1px;"
+            baseClass == "font-normal" -> "font-weight: 400;"
+            baseClass == "font-medium" -> "font-weight: 500;"
+            baseClass == "font-semibold" -> "font-weight: 600;"
+            baseClass == "font-bold" -> "font-weight: 700;"
+            baseClass == "font-extrabold" -> "font-weight: 800;"
+            baseClass == "font-black" -> "font-weight: 900;"
+            baseClass.startsWith("p-") -> {
+                val value = extractSpacingValue(baseClass)
+                if (value.isNotEmpty()) {
+                    "padding: $value;"
+                } else {
+                    "padding: [spacing-value];"
+                }
+            }
+            baseClass.startsWith("px-") -> {
+                val value = extractSpacingValue(baseClass)
+                if (value.isNotEmpty()) {
+                    "padding-left: $value;\npadding-right: $value;"
+                } else {
+                    "padding-left: [spacing-value];\npadding-right: [spacing-value];"
+                }
+            }
+            baseClass.startsWith("py-") -> {
+                val value = extractSpacingValue(baseClass)
+                if (value.isNotEmpty()) {
+                    "padding-top: $value;\npadding-bottom: $value;"
+                } else {
+                    "padding-top: [spacing-value];\npadding-bottom: [spacing-value];"
+                }
+            }
+            baseClass.startsWith("m-") -> {
+                val value = extractSpacingValue(baseClass)
+                if (value.isNotEmpty()) {
+                    "margin: $value;"
+                } else {
+                    "margin: [spacing-value];"
+                }
+            }
+            baseClass.startsWith("mx-") -> {
+                val value = extractSpacingValue(baseClass)
+                if (value.isNotEmpty()) {
+                    "margin-left: $value;\nmargin-right: $value;"
+                } else {
+                    "margin-left: [spacing-value];\nmargin-right: [spacing-value];"
+                }
+            }
+            baseClass.startsWith("my-") -> {
+                val value = extractSpacingValue(baseClass)
+                if (value.isNotEmpty()) {
+                    "margin-top: $value;\nmargin-bottom: $value;"
+                } else {
+                    "margin-top: [spacing-value];\nmargin-bottom: [spacing-value];"
+                }
+            }
+            baseClass == "flex" -> "display: flex;"
+            baseClass == "inline-flex" -> "display: inline-flex;"
+            baseClass == "grid" -> "display: grid;"
+            baseClass == "inline-grid" -> "display: inline-grid;"
+            baseClass == "flex-row" -> "flex-direction: row;"
+            baseClass == "flex-row-reverse" -> "flex-direction: row-reverse;"
+            baseClass == "flex-col" -> "flex-direction: column;"
+            baseClass == "flex-col-reverse" -> "flex-direction: column-reverse;"
+            baseClass == "justify-start" -> "justify-content: flex-start;"
+            baseClass == "justify-end" -> "justify-content: flex-end;"
+            baseClass == "justify-center" -> "justify-content: center;"
+            baseClass == "justify-between" -> "justify-content: space-between;"
+            baseClass == "justify-around" -> "justify-content: space-around;"
+            baseClass == "justify-evenly" -> "justify-content: space-evenly;"
+            baseClass == "items-start" -> "align-items: flex-start;"
+            baseClass == "items-end" -> "align-items: flex-end;"
+            baseClass == "items-center" -> "align-items: center;"
+            baseClass == "items-baseline" -> "align-items: baseline;"
+            baseClass == "items-stretch" -> "align-items: stretch;"
+            baseClass == "border" -> "border-width: 1px;\nborder-style: solid;"
+            baseClass == "border-0" -> "border-width: 0px;"
             baseClass == "border-2" -> "border-width: 2px;"
             baseClass == "border-4" -> "border-width: 4px;"
-            baseClass == "border-t" -> "border-top-width: 1px;"
-            
+            baseClass == "border-8" -> "border-width: 8px;"
+            baseClass.startsWith("border-") && baseClass.split("-").size > 1 -> {
+                val colorValue = extractColorValue(baseClass)
+                if (colorValue.isNotEmpty()) {
+                    "border-color: $colorValue;"
+                } else {
+                    "border-color: [color-value];"
+                }
+            }
+            baseClass == "rounded-none" -> "border-radius: 0px;"
+            baseClass == "rounded-sm" -> "border-radius: 0.125rem; /* 2px */"
             baseClass == "rounded" -> "border-radius: 0.25rem; /* 4px */"
             baseClass == "rounded-md" -> "border-radius: 0.375rem; /* 6px */"
             baseClass == "rounded-lg" -> "border-radius: 0.5rem; /* 8px */"
+            baseClass == "rounded-xl" -> "border-radius: 0.75rem; /* 12px */"
+            baseClass == "rounded-2xl" -> "border-radius: 1rem; /* 16px */"
+            baseClass == "rounded-3xl" -> "border-radius: 1.5rem; /* 24px */"
             baseClass == "rounded-full" -> "border-radius: 9999px;"
-            
-            // Effects
-            baseClass == "shadow" -> "box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);"
-            baseClass == "shadow-md" -> "box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);"
-            baseClass == "shadow-lg" -> "box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);"
-            
-            baseClass == "opacity-0" -> "opacity: 0;"
-            baseClass == "opacity-50" -> "opacity: 0.5;"
-            baseClass == "opacity-100" -> "opacity: 1;"
-            
-            // Transitions
-            baseClass == "transition" -> "transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;\ntransition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\ntransition-duration: 150ms;"
-            baseClass == "duration-300" -> "transition-duration: 300ms;"
-            baseClass == "ease-in-out" -> "transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);"
-            
-            // Valeurs arbitraires
-            baseClass.contains("[") && baseClass.contains("]") -> {
-                val property = baseClass.substringBefore("[")
-                val value = baseClass.substringAfter("[").substringBefore("]")
-                
-                when (property) {
-                    "w" -> "width: $value;"
-                    "h" -> "height: $value;"
-                    "text" -> "color: $value;"
-                    "bg" -> "background-color: $value;"
-                    "p" -> "padding: $value;"
-                    "m" -> "margin: $value;"
-                    else -> "$property: $value;"
-                }
-            }
-            
-            else -> ""
+            baseClass == "shadow-sm" -> "box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);"
+            baseClass == "shadow" -> "box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);"
+            baseClass == "shadow-md" -> "box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);"
+            baseClass == "shadow-lg" -> "box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);"
+            baseClass == "shadow-xl" -> "box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);"
+            baseClass == "shadow-2xl" -> "box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);"
+            baseClass == "shadow-inner" -> "box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);"
+            baseClass == "shadow-none" -> "box-shadow: none;"
+            else -> "[CSS equivalent not available]"
         }
     }
     
@@ -273,73 +601,246 @@ class TailwindEnhancedDocumentation {
         val baseClass = className.split(":").last()
         
         return when {
-            // Layout
-            baseClass == "container" -> "<div class=\"container mx-auto px-4\">\n  <!-- Centered content with margins -->\n</div>"
-            
-            // Flexbox
-            baseClass.startsWith("flex") || baseClass.startsWith("items-") || baseClass.startsWith("justify-") -> 
-                "<div class=\"flex items-center justify-between p-4\">\n  <div>Item 1</div>\n  <div>Item 2</div>\n</div>"
-            
-            // Grid
-            baseClass.startsWith("grid") -> 
-                "<div class=\"grid grid-cols-3 gap-4\">\n  <div>1</div>\n  <div>2</div>\n  <div>3</div>\n</div>"
-            
-            // Spacing
-            baseClass.startsWith("p-") || baseClass.startsWith("px-") || baseClass.startsWith("py-") -> 
-                "<div class=\"$className bg-gray-200\">\n  Element with padding\n</div>"
-            
-            baseClass.startsWith("m-") || baseClass.startsWith("mx-") || baseClass.startsWith("my-") -> 
-                "<div class=\"$className bg-gray-200\">\n  Element with margin\n</div>"
-            
-            // Typography
-            baseClass.startsWith("text-") && baseClass.length <= 7 -> 
-                "<p class=\"$className font-medium\">\n  Text with size $baseClass\n</p>"
-            
-            baseClass.startsWith("font-") -> 
-                "<p class=\"$className text-lg\">\n  Text with font style $baseClass\n</p>"
-            
-            // Colors
-            baseClass.startsWith("text-") && baseClass.length > 7 -> 
-                "<p class=\"$className\">\n  Colored text\n</p>"
-            
-            baseClass.startsWith("bg-") -> 
-                "<div class=\"$className p-4 rounded\">\n  Element with background\n</div>"
-            
-            // Borders
-            baseClass.startsWith("border") && !baseClass.startsWith("border-radius") -> 
-                "<div class=\"$className border-gray-300 p-4\">\n  Element with border\n</div>"
-            
-            baseClass.startsWith("rounded") -> 
-                "<div class=\"$className bg-blue-500 p-4 text-white\">\n  Element with rounded corners\n</div>"
-            
-            // Effects
-            baseClass.startsWith("shadow") -> 
-                "<div class=\"$className bg-white p-4 rounded\">\n  Element with shadow\n</div>"
-            
-            baseClass.startsWith("opacity") -> 
-                "<div class=\"$className bg-blue-500 p-4 text-white\">\n  Element with opacity\n</div>"
-            
-            // Transitions
-            baseClass.startsWith("transition") || baseClass.startsWith("duration") || baseClass.startsWith("ease") -> 
-                "<button class=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded $className\">\n  Button with transition\n</button>"
-            
-            // Hover and other variants
-            className.contains(":") -> {
-                val variant = className.split(":").first()
-                val utility = className.split(":").last()
-                
-                when (variant) {
-                    "hover" -> "<button class=\"bg-blue-500 $className text-white font-bold py-2 px-4 rounded\">\n  Hover me\n</button>"
-                    "focus" -> "<input class=\"border $className p-2 rounded\" placeholder=\"Click here\" />"
-                    "active" -> "<button class=\"bg-blue-500 $className text-white font-bold py-2 px-4 rounded\">\n  Click me\n</button>"
-                    "dark" -> "<div class=\"bg-white dark:bg-gray-800 text-gray-900 $className p-4 rounded\">\n  Dark/light mode\n</div>"
-                    "md", "lg", "xl" -> "<div class=\"bg-blue-500 $className p-4 rounded\">\n  Responsive from $variant breakpoint\n</div>"
-                    "group-hover" -> "<div class=\"group bg-white hover:bg-blue-100 p-4 rounded\">\n  <span class=\"$className\">Effect when parent is hovered</span>\n</div>"
-                    else -> "<div class=\"$className p-4\">\n  Example with $variant variant\n</div>"
-                }
-            }
-            
+            baseClass.startsWith("bg-") -> """<div class="$className p-4">Element with background color</div>"""
+            baseClass.startsWith("text-") && baseClass.contains("-") -> """<p class="$className">Text with color styling</p>"""
+            baseClass.startsWith("text-") -> """<p class="$className">Text with size styling</p>"""
+            baseClass.startsWith("font-") -> """<p class="$className">Text with font weight styling</p>"""
+            baseClass.startsWith("p-") -> """<div class="$className border border-gray-200">Element with padding</div>"""
+            baseClass.startsWith("m-") -> """<div class="border border-gray-200 $className">Element with margin</div>"""
+            baseClass.startsWith("w-") -> """<div class="$className h-6 bg-blue-200">Element with width</div>"""
+            baseClass.startsWith("h-") -> """<div class="w-24 $className bg-blue-200">Element with height</div>"""
+            baseClass == "flex" -> """<div class="$className gap-2">
+  <div class="bg-blue-200 p-2">Item 1</div>
+  <div class="bg-blue-300 p-2">Item 2</div>
+</div>"""
+            baseClass == "grid" -> """<div class="$className grid-cols-3 gap-2">
+  <div class="bg-blue-200 p-2">Item 1</div>
+  <div class="bg-blue-300 p-2">Item 2</div>
+  <div class="bg-blue-400 p-2">Item 3</div>
+</div>"""
+            baseClass.startsWith("border") -> """<div class="$className border-gray-400 p-4">Element with border</div>"""
+            baseClass.startsWith("rounded") -> """<div class="$className bg-blue-200 p-4">Element with rounded corners</div>"""
+            baseClass.startsWith("shadow") -> """<div class="$className bg-white p-4">Element with shadow</div>"""
             else -> ""
         }
     }
-}
+    /**
+     * Gets interactive example HTML for a class
+     */
+    private fun getInteractiveExample(className: String): String {
+        val baseClass = className.split(":").last()
+        
+        // No interactive examples for now - this is a placeholder for future implementation
+        return ""
+    }
+    
+    /**
+     * Gets related Tailwind classes
+     */
+    private fun getRelatedClasses(className: String): String {
+        val baseClass = className.split(":").last()
+        
+        return when {
+            baseClass.startsWith("bg-") -> "text-, p-, m-, rounded-"
+            baseClass.startsWith("text-") && baseClass.contains("-") -> "bg-, font-, p-"
+            baseClass.startsWith("text-") -> "font-, text-[color], leading-"
+            baseClass.startsWith("font-") -> "text-, tracking-, leading-"
+            baseClass.startsWith("p-") -> "px-, py-, pt-, pb-, pl-, pr-"
+            baseClass.startsWith("m-") -> "mx-, my-, mt-, mb-, ml-, mr-"
+            baseClass.startsWith("w-") -> "h-, min-w-, max-w-"
+            baseClass.startsWith("h-") -> "w-, min-h-, max-h-"
+            baseClass == "flex" -> "flex-row, flex-col, justify-, items-"
+            baseClass == "grid" -> "grid-cols-, gap-, grid-rows-"
+            baseClass.startsWith("border") -> "border-[color], border-[width], rounded-"
+            baseClass.startsWith("rounded") -> "border, overflow-hidden"
+            baseClass.startsWith("shadow") -> "opacity-, z-"
+            else -> ""
+        }
+    }
+    
+    /**
+     * Gets description for a variant
+     */
+    private fun getVariantDescription(variant: String): String {
+        return when (variant) {
+            "hover" -> "Applied when the user hovers over the element with a pointer device"
+            "focus" -> "Applied when the element has focus (e.g., form input)"
+            "active" -> "Applied when the element is being activated by the user (e.g., clicked)"
+            "disabled" -> "Applied when the element is disabled"
+            "visited" -> "Applied when the element (usually a link) has been visited"
+            "first" -> "Applied to the first element among a group of sibling elements"
+            "last" -> "Applied to the last element among a group of sibling elements"
+            "odd" -> "Applied to elements with an odd position among a group of sibling elements"
+            "even" -> "Applied to elements with an even position among a group of sibling elements"
+            "sm" -> "Applied at the small screen breakpoint (640px and above)"
+            "md" -> "Applied at the medium screen breakpoint (768px and above)"
+            "lg" -> "Applied at the large screen breakpoint (1024px and above)"
+            "xl" -> "Applied at the extra large screen breakpoint (1280px and above)"
+            "2xl" -> "Applied at the 2x extra large screen breakpoint (1536px and above)"
+            "dark" -> "Applied when dark mode is enabled"
+            "group-hover" -> "Applied when a parent with the 'group' class is hovered"
+            "peer-hover" -> "Applied when a sibling with the 'peer' class is hovered"
+            "peer-focus" -> "Applied when a sibling with the 'peer' class is focused"
+            else -> "A conditional style variant"
+        }
+    }
+    
+    /**
+     * Gets customization information from the Tailwind config
+     */
+    private fun getCustomizationInfo(className: String, project: Project?): String {
+        // This would normally analyze the Tailwind config file
+        // For now, we return generic customization info
+        
+        val baseClass = className.split(":").last()
+        
+        return when {
+            baseClass.startsWith("bg-") -> 
+                "Colors can be customized in the tailwind.config.js file under the 'theme.colors' section."
+            baseClass.startsWith("text-") && baseClass.contains("-") -> 
+                "Text colors can be customized in the tailwind.config.js file under the 'theme.colors' section."
+            baseClass.startsWith("text-") -> 
+                "Font sizes can be customized in the tailwind.config.js file under the 'theme.fontSize' section."
+            baseClass.startsWith("font-") -> 
+                "Font weights can be customized in the tailwind.config.js file under the 'theme.fontWeight' section."
+            baseClass.startsWith("p-") || baseClass.startsWith("m-") -> 
+                "Spacing values can be customized in the tailwind.config.js file under the 'theme.spacing' section."
+            baseClass.startsWith("w-") || baseClass.startsWith("h-") -> 
+                "Width and height values can be customized in the tailwind.config.js file under the 'theme.width' and 'theme.height' sections."
+            baseClass.startsWith("rounded") -> 
+                "Border radius values can be customized in the tailwind.config.js file under the 'theme.borderRadius' section."
+            baseClass.startsWith("shadow") -> 
+                "Box shadow values can be customized in the tailwind.config.js file under the 'theme.boxShadow' section."
+            else -> ""
+        }
+    }
+    
+    /**
+     * Extract color value from a Tailwind color class name
+     */
+    private fun extractColorValue(className: String): String {
+        val parts = className.split("-")
+        if (parts.size < 2) return ""
+        
+        // Basic colors without shades
+        if (parts.size == 2) {
+            return when (parts[1]) {
+                "black" -> "#000000"
+                "white" -> "#ffffff"
+                "transparent" -> "transparent"
+                "current" -> "currentColor"
+                "red" -> "#ef4444"    // red-500 equivalent
+                "blue" -> "#3b82f6"   // blue-500 equivalent
+                "green" -> "#22c55e"  // green-500 equivalent
+                "yellow" -> "#eab308" // yellow-500 equivalent
+                "gray" -> "#6b7280"   // gray-500 equivalent
+                else -> ""
+            }
+        }
+        
+        // For example: bg-blue-500, text-red-700
+        if (parts.size >= 3) {
+            val colorName = parts[1]
+            val shade = parts[2]
+            
+            // Map common color-shade combinations to hex values
+            return when {
+                colorName == "slate" && shade == "50" -> "#f8fafc"
+                colorName == "slate" && shade == "100" -> "#f1f5f9"
+                colorName == "slate" && shade == "500" -> "#64748b"
+                colorName == "slate" && shade == "900" -> "#0f172a"
+                
+                colorName == "gray" && shade == "50" -> "#f9fafb"
+                colorName == "gray" && shade == "100" -> "#f3f4f6"
+                colorName == "gray" && shade == "500" -> "#6b7280"
+                colorName == "gray" && shade == "900" -> "#111827"
+                
+                colorName == "red" && shade == "50" -> "#fef2f2"
+                colorName == "red" && shade == "100" -> "#fee2e2"
+                colorName == "red" && shade == "500" -> "#ef4444"
+                colorName == "red" && shade == "900" -> "#7f1d1d"
+                
+                colorName == "blue" && shade == "50" -> "#eff6ff"
+                colorName == "blue" && shade == "100" -> "#dbeafe"
+                colorName == "blue" && shade == "500" -> "#3b82f6"
+                colorName == "blue" && shade == "900" -> "#1e3a8a"
+                
+                colorName == "green" && shade == "50" -> "#f0fdf4"
+                colorName == "green" && shade == "100" -> "#dcfce7"
+                colorName == "green" && shade == "500" -> "#22c55e"
+                colorName == "green" && shade == "900" -> "#14532d"
+                
+                else -> ""
+            }
+        }
+        
+        return ""
+    }
+    
+    /**
+     * Extract spacing value from a Tailwind spacing class
+     */
+    private fun extractSpacingValue(className: String): String {
+        val parts = className.split("-")
+        if (parts.size < 2) return ""
+        
+        val value = parts.last()
+        
+        return when (value) {
+            "0" -> "0px"
+            "px" -> "1px"
+            "0.5" -> "0.125rem" // 2px
+            "1" -> "0.25rem"    // 4px
+            "2" -> "0.5rem"     // 8px
+            "3" -> "0.75rem"    // 12px
+            "4" -> "1rem"       // 16px
+            "5" -> "1.25rem"    // 20px
+            "6" -> "1.5rem"     // 24px
+            "8" -> "2rem"       // 32px
+            "10" -> "2.5rem"    // 40px
+            "12" -> "3rem"      // 48px
+            "16" -> "4rem"      // 64px
+            "20" -> "5rem"      // 80px
+            "24" -> "6rem"      // 96px
+            "32" -> "8rem"      // 128px
+            "40" -> "10rem"     // 160px
+            "48" -> "12rem"     // 192px
+            "56" -> "14rem"     // 224px
+            "64" -> "16rem"     // 256px
+            else -> ""
+        }
+    }
+    
+    /**
+     * Extract prefix and value from a class name
+     */
+    private fun extractPrefixAndValue(className: String): Pair<String, String> {
+        // Regular expression to match Tailwind class patterns
+        val regex = """^([a-zA-Z0-9-]+)(?:-(\d+(?:\.\d+)?|[a-zA-Z]+))?(?:\[(.*)\])?$""".toRegex()
+        val match = regex.find(className) ?: return Pair(className, "")
+        
+        val groups = match.groupValues
+        val prefix = groups[1]
+        
+        // Handle arbitrary values like w-[300px]
+        val value = if (groups[2].isNotEmpty()) {
+            groups[2]
+        } else if (groups.size > 3 && groups[3].isNotEmpty()) {
+            groups[3]
+        } else {
+            ""
+        }
+        
+        return Pair(prefix, value)
+    }
+    
+    /**
+     * Determines if a class belongs to Tailwind v4
+     */
+    private fun isTailwindV4Class(className: String): Boolean {
+        return className.startsWith("accent-") || 
+               className.startsWith("backdrop-") ||
+               className.startsWith("border-x-") ||
+               className.startsWith("border-y-")
+    }
+} // End of TailwindEnhancedDocumentation class

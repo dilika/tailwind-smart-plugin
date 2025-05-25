@@ -40,10 +40,11 @@ intellij {
             ?: project.property("platformType").toString()
     )
     updateSinceUntilBuild.set(true)
-    // Always include Kotlin plugin to satisfy Kotlin-based code
+    // Always include Kotlin and JavaScript plugins
     val bundled = project.property("platformBundledPlugins").toString()
         .split(',').filter { it.isNotEmpty() }
-    plugins.set((bundled + "Kotlin").distinct())
+    // Add JavaScript plugin for JSX support
+    plugins.set((bundled + "Kotlin" + "JavaScript").distinct())
 }
 
 // Configure Gradle tasks
