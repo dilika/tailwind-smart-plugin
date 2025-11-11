@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tailwind Smart Plugin - Le plugin Tailwind le plus intelligent</title>
+    <meta name="description" content="IA contextuelle, preview visuel, intégration Figma. Transformez votre workflow Tailwind CSS avec le plugin le plus avancé pour IntelliJ IDEA.">
+    <meta name="keywords" content="tailwind css, intellij, plugin, figma, ia, preview, refactoring">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Tailwind Smart Plugin - Le plugin Tailwind le plus intelligent">
+    <meta property="og:description" content="IA contextuelle, preview visuel, intégration Figma. Transformez votre workflow Tailwind CSS.">
+    <meta property="og:image" content="https://tailwindsmartplugin.com/assets/og-image.jpg">
+    <meta property="og:url" content="https://tailwindsmartplugin.com">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Tailwind Smart Plugin - Le plugin Tailwind le plus intelligent">
+    <meta name="twitter:description" content="IA contextuelle, preview visuel, intégration Figma. Transformez votre workflow Tailwind CSS.">
+    <meta name="twitter:image" content="https://tailwindsmartplugin.com/assets/twitter-image.jpg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom CSS -->
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .cta-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-gray-900">🚀 Tailwind Smart Plugin</h1>
+                    </div>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#features" class="text-gray-500 hover:text-gray-900">Fonctionnalités</a>
+                    <a href="#testimonials" class="text-gray-500 hover:text-gray-900">Témoignages</a>
+                    <a href="#pricing" class="text-gray-500 hover:text-gray-900">Tarifs</a>
+                    <a href="#contact" class="text-gray-500 hover:text-gray-900">Contact</a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <a href="https://plugins.jetbrains.com/plugin/tailwind-smart-plugin" 
+                       class="cta-button text-white px-6 py-2 rounded-lg font-semibold">
+                        Installer Maintenant
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-5xl font-bold mb-6">
+                Le plugin Tailwind CSS le plus intelligent du marché
+            </h1>
+            <p class="text-xl mb-8 max-w-3xl mx-auto">
+                IA contextuelle, preview visuel, intégration Figma. Transformez votre workflow Tailwind CSS 
+                avec des suggestions intelligentes et des outils de productivité avancés.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://plugins.jetbrains.com/plugin/tailwind-smart-plugin" 
+                   class="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    🚀 Installer Gratuitement
+                </a>
+                <a href="#demo" 
+                   class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-900 transition-colors">
+                    📺 Voir la Démo
+                </a>
+            </div>
+            <p class="text-sm mt-4 opacity-75">
+                Compatible avec IntelliJ IDEA, WebStorm, PyCharm et tous les IDEs JetBrains
+            </p>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">
+                    ✨ Fonctionnalités Révolutionnaires
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Découvrez les fonctionnalités qui font de ce plugin le plus avancé du marché
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- IA Contextuelle -->
+                <div class="feature-card bg-gray-50 p-8 rounded-xl">
+                    <div class="text-4xl mb-4">🧠</div>
+                    <h3 class="text-xl font-semibold mb-4">IA Contextuelle</h3>
+                    <p class="text-gray-600 mb-4">
+                        Suggestions intelligentes basées sur le contexte DOM. Le plugin détecte automatiquement 
+                        le type de composant et propose les classes les plus pertinentes.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• Détection automatique de composants</li>
+                        <li>• 50+ patterns UI prédéfinis</li>
+                        <li>• Apprentissage des préférences</li>
+                    </ul>
+                </div>
+
+                <!-- Preview Visuel -->
+                <div class="feature-card bg-gray-50 p-8 rounded-xl">
+                    <div class="text-4xl mb-4">🎨</div>
+                    <h3 class="text-xl font-semibold mb-4">Preview Visuel</h3>
+                    <p class="text-gray-600 mb-4">
+                        Rendu CSS en temps réel dans l'éditeur. Voir instantanément le résultat de vos classes 
+                        Tailwind sans quitter votre IDE.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• Aperçu temps réel</li>
+                        <li>• Palette interactive</li>
+                        <li>• Outils visuels</li>
+                    </ul>
+                </div>
+
+                <!-- Intégration Figma -->
+                <div class="feature-card bg-gray-50 p-8 rounded-xl">
+                    <div class="text-4xl mb-4">🔗</div>
+                    <h3 class="text-xl font-semibold mb-4">Intégration Figma</h3>
+                    <p class="text-gray-600 mb-4">
+                        Import/sync bidirectionnel avec Figma. Synchronisez automatiquement vos design tokens 
+                        et générez votre design system.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• Sync bidirectionnel</li>
+                        <li>• Import de design tokens</li>
+                        <li>• Génération de design system</li>
+                    </ul>
+                </div>
+
+                <!-- Audit Intelligent -->
+                <div class="feature-card bg-gray-50 p-8 rounded-xl">
+                    <div class="text-4xl mb-4">🔧</div>
+                    <h3 class="text-xl font-semibold mb-4">Audit Intelligent</h3>
+                    <p class="text-gray-600 mb-4">
+                        Détection automatique des problèmes et suggestions d'optimisation. 
+                        Améliorez la qualité de votre code CSS.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• Détection d'anti-patterns</li>
+                        <li>• Classes inutilisées</li>
+                        <li>• Suggestions d'optimisation</li>
+                    </ul>
+                </div>
+
+                <!-- Refactoring Automatique -->
+                <div class="feature-card bg-gray-50 p-8 rounded-xl">
+                    <div class="text-4xl mb-4">⚡</div>
+                    <h3 class="text-xl font-semibold mb-4">Refactoring Automatique</h3>
+                    <p class="text-gray-600 mb-4">
+                        Optimisation automatique des classes Tailwind. Réorganisez, consolidez et 
+                        optimisez votre code CSS.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• Tri intelligent des classes</li>
+                        <li>• Consolidation automatique</li>
+                        <li>• Suppression des doublons</li>
+                    </ul>
+                </div>
+
+                <!-- Collaboration -->
+                <div class="feature-card bg-gray-50 p-8 rounded-xl">
+                    <div class="text-4xl mb-4">🤝</div>
+                    <h3 class="text-xl font-semibold mb-4">Collaboration</h3>
+                    <p class="text-gray-600 mb-4">
+                        Snippets partagés, analytics et synchronisation cloud. 
+                        Collaborez efficacement avec votre équipe.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• Snippets partagés</li>
+                        <li>• Analytics détaillés</li>
+                        <li>• Sync cloud</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">
+                    💬 Témoignages
+                </h2>
+                <p class="text-xl text-gray-600">
+                    Découvrez ce que pensent les développeurs qui utilisent notre plugin
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                            S
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="font-semibold">Sarah Chen</h4>
+                            <p class="text-sm text-gray-500">Développeuse Frontend</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">
+                        "Ce plugin a révolutionné mon workflow Tailwind. Les suggestions contextuelles sont incroyables 
+                        et m'ont fait gagner des heures de développement !"
+                    </p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold">
+                            M
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="font-semibold">Marc Dubois</h4>
+                            <p class="text-sm text-gray-500">Lead Designer</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">
+                        "L'intégration avec Figma est fantastique ! Je peux maintenant synchroniser mes designs 
+                        directement avec le code Tailwind. Un gain de temps énorme."
+                    </p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                            A
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="font-semibold">Alex Rodriguez</h4>
+                            <p class="text-sm text-gray-500">CTO Startup</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">
+                        "L'audit intelligent nous a permis d'optimiser notre CSS et de réduire la taille de notre bundle. 
+                        Un outil indispensable pour notre équipe !"
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">
+                    💰 Tarifs
+                </h2>
+                <p class="text-xl text-gray-600">
+                    Choisissez le plan qui correspond à vos besoins
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Plan Gratuit -->
+                <div class="bg-gray-50 p-8 rounded-xl">
+                    <h3 class="text-2xl font-bold mb-4">Gratuit</h3>
+                    <p class="text-gray-600 mb-6">
+                        Parfait pour commencer avec Tailwind CSS
+                    </p>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-3">✓</span>
+                            Suggestions de base
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-3">✓</span>
+                            Tri des classes
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-3">✓</span>
+                            Pliage des classes
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-green-500 mr-3">✓</span>
+                            Support multi-langages
+                        </li>
+                    </ul>
+                    <a href="https://plugins.jetbrains.com/plugin/tailwind-smart-plugin" 
+                       class="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold text-center block hover:bg-gray-800 transition-colors">
+                        Installer Gratuitement
+                    </a>
+                </div>
+
+                <!-- Plan Premium -->
+                <div class="bg-gradient-to-br from-blue-500 to-purple-600 text-white p-8 rounded-xl relative">
+                    <div class="absolute top-4 right-4 bg-yellow-400 text-black px-3 py-1 rounded-full text-sm font-bold">
+                        POPULAIRE
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Premium</h3>
+                    <p class="text-blue-100 mb-6">
+                        Pour les développeurs professionnels
+                    </p>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center">
+                            <span class="text-yellow-400 mr-3">✓</span>
+                            IA contextuelle avancée
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-yellow-400 mr-3">✓</span>
+                            Preview visuel temps réel
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-yellow-400 mr-3">✓</span>
+                            Intégration Figma
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-yellow-400 mr-3">✓</span>
+                            Audit intelligent
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-yellow-400 mr-3">✓</span>
+                            Refactoring automatique
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-yellow-400 mr-3">✓</span>
+                            Snippets collaboratifs
+                        </li>
+                        <li class="flex items-center">
+                            <span class="text-yellow-400 mr-3">✓</span>
+                            Analytics détaillés
+                        </li>
+                    </ul>
+                    <a href="#contact" 
+                       class="w-full bg-white text-blue-600 py-3 rounded-lg font-semibold text-center block hover:bg-gray-100 transition-colors">
+                        Contacter pour Premium
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="gradient-bg text-white py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-bold mb-6">
+                Prêt à transformer votre workflow Tailwind ?
+            </h2>
+            <p class="text-xl mb-8 max-w-3xl mx-auto">
+                Rejoignez des milliers de développeurs qui utilisent déjà Tailwind Smart Plugin 
+                pour accélérer leur développement.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://plugins.jetbrains.com/plugin/tailwind-smart-plugin" 
+                   class="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    🚀 Installer Maintenant
+                </a>
+                <a href="#contact" 
+                   class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-900 transition-colors">
+                    💬 Nous Contacter
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">🚀 Tailwind Smart Plugin</h3>
+                    <p class="text-gray-400">
+                        Le plugin Tailwind CSS le plus intelligent pour IntelliJ IDEA.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Produit</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#features" class="hover:text-white">Fonctionnalités</a></li>
+                        <li><a href="#pricing" class="hover:text-white">Tarifs</a></li>
+                        <li><a href="#testimonials" class="hover:text-white">Témoignages</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="https://github.com/dilika/tailwind-smart-plugin" class="hover:text-white">GitHub</a></li>
+                        <li><a href="#contact" class="hover:text-white">Contact</a></li>
+                        <li><a href="https://plugins.jetbrains.com/plugin/tailwind-smart-plugin" class="hover:text-white">Marketplace</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Suivez-nous</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="https://twitter.com/tailwindsmart" class="hover:text-white">Twitter</a></li>
+                        <li><a href="https://linkedin.com/company/tailwindsmart" class="hover:text-white">LinkedIn</a></li>
+                        <li><a href="https://youtube.com/tailwindsmart" class="hover:text-white">YouTube</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 Tailwind Smart Plugin. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add scroll effect to header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.classList.add('bg-white', 'shadow-lg');
+            } else {
+                header.classList.remove('shadow-lg');
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+

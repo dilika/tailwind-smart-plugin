@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "1.9.22"
-    id("org.jetbrains.intellij") version "1.17.0"
+    id("org.jetbrains.intellij") version "1.17.3"
     id("org.jetbrains.changelog") version "2.0.0"
 }
 
@@ -16,6 +16,16 @@ repositories {
 // Configure JVM target for Kotlin
 kotlin {
     jvmToolchain(17)
+    compilerOptions {
+        freeCompilerArgs.add("-Xskip-metadata-version-check")
+    }
+}
+
+// Configure Java toolchain
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
 }
 
 // Add dependencies needed by your plugin
@@ -26,6 +36,12 @@ dependencies {
     implementation(libs.graalvm.sdk)
     implementation(libs.graalvm.js)
     implementation(libs.graalvm.js.scriptengine)
+    
+    // Test dependencies
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    testImplementation("org.mockito:mockito-core:5.1.1")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
+    testImplementation("io.mockk:mockk:1.13.5")
 }
 
 // IntelliJ Plugin configuration
@@ -44,7 +60,7 @@ intellij {
     val bundled = project.property("platformBundledPlugins").toString()
         .split(',').filter { it.isNotEmpty() }
     // Add JavaScript plugin for JSX support
-    plugins.set((bundled + "Kotlin" + "JavaScript").distinct())
+    plugins.set((bundled + "JavaScript").distinct())
 }
 
 // Configure Gradle tasks
@@ -56,7 +72,13 @@ tasks {
     // Patch plugin.xml
     patchPluginXml {
         sinceBuild.set(project.property("pluginSinceBuild").toString())
-        untilBuild.set(project.property("pluginUntilBuild").toString())
+        val untilBuildValue = project.property("pluginUntilBuild").toString()
+        if (untilBuildValue.isNotBlank()) {
+            untilBuild.set(untilBuildValue)
+        } else {
+            // Empty string means support all future versions
+            untilBuild.set("")
+        }
 
         // Plugin description
         pluginDescription.set(
@@ -157,8 +179,10 @@ tasks {
 
     // Test configuration
     test {
+        useJUnitPlatform()
         testLogging {
             events("passed", "skipped", "failed")
+            showStandardStreams = true
         }
     }
 

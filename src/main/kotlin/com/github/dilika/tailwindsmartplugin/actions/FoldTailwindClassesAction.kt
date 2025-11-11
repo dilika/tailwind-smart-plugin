@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import javax.swing.KeyStroke
@@ -102,6 +101,6 @@ class FoldTailwindClassesActionRegistrar : Disposable {
     
     companion object {
         // Get or create the service
-        fun getInstance() = ApplicationManager.getApplication().service<FoldTailwindClassesActionRegistrar>()
+        fun getInstance() = ApplicationManager.getApplication().getService(FoldTailwindClassesActionRegistrar::class.java)
     }
 }

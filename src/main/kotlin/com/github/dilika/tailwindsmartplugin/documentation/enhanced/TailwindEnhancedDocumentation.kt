@@ -1,12 +1,12 @@
 package com.github.dilika.tailwindsmartplugin.documentation.enhanced
 
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 
 /**
  * Provides enhanced documentation for Tailwind CSS classes
  */
 class TailwindEnhancedDocumentation {
-    private val logger = logger<TailwindEnhancedDocumentation>()
+    private val logger = Logger.getInstance(TailwindEnhancedDocumentation::class.java)
 
     /**
      * Generates enhanced documentation for a Tailwind CSS class

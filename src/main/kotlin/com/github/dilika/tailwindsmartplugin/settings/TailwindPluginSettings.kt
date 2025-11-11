@@ -30,7 +30,7 @@ class TailwindPluginSettings : PersistentStateComponent<TailwindPluginSettings> 
     companion object {
         // Helper to get the service instance
         fun getInstance(): TailwindPluginSettings {
-            return com.intellij.openapi.components.service<TailwindPluginSettings>()
+            return com.intellij.openapi.application.ApplicationManager.getApplication().getService(TailwindPluginSettings::class.java)
         }
     }
 }

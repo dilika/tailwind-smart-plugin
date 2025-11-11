@@ -3,8 +3,9 @@ package com.github.dilika.tailwindsmartplugin.settings
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.layout.panel
 import javax.swing.JComponent
+import javax.swing.JPanel
+import java.awt.GridLayout
 
 /**
  * Configurable for Tailwind CSS Smart Plugin settings.
@@ -22,12 +23,10 @@ class TailwindSettingsConfigurable : Configurable {
         showIconsCheckBox = JBCheckBox("Show icons in completion popup", settings.showIcons)
         useRoundedIconsCheckBox = JBCheckBox("Use rounded icons for color classes", settings.useRoundedColorIcons)
         
-        return panel {
-            titledRow("Icon Settings") {
-                row { showIconsCheckBox!!() }
-                row { useRoundedIconsCheckBox!!() }
-            }
-        }
+        val panel = JPanel(GridLayout(0, 1))
+        panel.add(showIconsCheckBox)
+        panel.add(useRoundedIconsCheckBox)
+        return panel
     }
     
     override fun isModified(): Boolean {

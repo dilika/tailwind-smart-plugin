@@ -6,7 +6,6 @@ import com.intellij.patterns.XmlPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.components.service
 import com.intellij.util.ProcessingContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
@@ -15,6 +14,12 @@ import com.github.dilika.tailwindsmartplugin.services.TailwindConfigAnalyzer
 import com.github.dilika.tailwindsmartplugin.jit.TailwindJitSupport
 import com.github.dilika.tailwindsmartplugin.utils.TailwindUtils
 import com.github.dilika.tailwindsmartplugin.utils.TailwindIconRegistry
+import com.github.dilika.tailwindsmartplugin.icons.TailwindPremiumIconRegistry
+import com.github.dilika.tailwindsmartplugin.context.TailwindContextAnalyzer
+import com.github.dilika.tailwindsmartplugin.context.TailwindContextualSuggestionsProvider
+import com.github.dilika.tailwindsmartplugin.context.TailwindPreferenceLearningService
+import com.github.dilika.tailwindsmartplugin.context.TailwindPatternLibrary
+import com.github.dilika.tailwindsmartplugin.preview.TailwindVisualPreviewService
 
 /**
  * CompletionContributor for Tailwind CSS classes.
@@ -68,6 +73,13 @@ class ProjectAwareTailwindCompletionProvider : CompletionProvider<CompletionPara
         "space-", "gap-", "opacity-", "z-", "outline-", "ring-"
     )
     
+    // Services pour l'intelligence contextuelle
+    private var contextAnalyzer: TailwindContextAnalyzer? = null
+    private var contextualSuggestionsProvider: TailwindContextualSuggestionsProvider? = null
+    private var preferenceLearningService: TailwindPreferenceLearningService? = null
+    private var patternLibrary: TailwindPatternLibrary? = null
+    private var visualPreviewService: TailwindVisualPreviewService? = null
+    
     override fun addCompletions(
         parameters: CompletionParameters,
         context: ProcessingContext,
@@ -78,8 +90,11 @@ class ProjectAwareTailwindCompletionProvider : CompletionProvider<CompletionPara
             val project = parameters.originalFile.project
             
             // Get project services when needed - this is the key part that fixes the issue
-            val configAnalyzer = project.service<TailwindConfigAnalyzer>()
-            val jitSupport = project.service<TailwindJitSupport>()
+            val configAnalyzer = project.getService(TailwindConfigAnalyzer::class.java)
+            val jitSupport = project.getService(TailwindJitSupport::class.java)
+            
+            // Initialize contextual services
+            initializeContextualServices(project)
             
             // Extract the prefix from the current position
             val position = parameters.position
@@ -93,11 +108,24 @@ class ProjectAwareTailwindCompletionProvider : CompletionProvider<CompletionPara
                 return
             }
             
+                // Add contextual suggestions first (highest priority)
+                // addContextualSuggestions(parameters, context, result)
+            
+            // Add contextual suggestions first (highest priority)
+            addContextualSuggestions(parameters, context, result)
+            
             // Get Tailwind classes and add them to completion results
             val classes = TailwindUtils.getTailwindClasses(project)
             logger.info("[Tailwind] Found ${classes.size} Tailwind classes")
             
-            val matchingClasses = classes.filter { cls ->
+            // Enregistrer l'utilisation dans l'historique si une classe est sélectionnée
+            // (sera appelé lors de la sélection)
+            
+            // Enhance suggestions with user preferences and history
+            val historyService = com.github.dilika.tailwindsmartplugin.context.ClassHistoryService.getInstance(project)
+            val enhancedClasses = enhanceSuggestionsWithHistory(classes, prefix, historyService, position)
+            
+            val matchingClasses = enhancedClasses.filter { cls ->
                 val matches = cls.startsWith(prefix, ignoreCase = true) ||
                               commonPrefixes.any { prefix.startsWith(it, ignoreCase = true) && cls.startsWith(it, ignoreCase = true) }
                 if (matches) {
@@ -110,15 +138,77 @@ class ProjectAwareTailwindCompletionProvider : CompletionProvider<CompletionPara
             
             matchingClasses.forEach { cls ->
                 try {
-                    val icon = TailwindIconRegistry.getIconForClass(cls)
-                    val element = LookupElementBuilder.create(cls)
+                    // Utiliser les icônes premium avec fallback
+                    val icon = try {
+                        TailwindPremiumIconRegistry.getPremiumIcon(cls)
+                    } catch (e: Exception) {
+                        logger.debug("[Tailwind] Error getting premium icon for $cls: ${e.message}")
+                        // Fallback vers l'ancien système d'icônes
+                        try {
+                            TailwindIconRegistry.getIconForClass(cls)
+                        } catch (e2: Exception) {
+                            logger.debug("[Tailwind] Error getting fallback icon for $cls: ${e2.message}")
+                            null // Pas d'icône si tout échoue
+                        }
+                    }
+                    
+                    // Déterminer la priorité basée sur la popularité et le contexte
+                    val priority = try {
+                        calculatePremiumPriority(cls, prefix, position)
+                    } catch (e: Exception) {
+                        logger.debug("[Tailwind] Error calculating priority for $cls: ${e.message}")
+                        100.0 // Priorité par défaut
+                    }
+                    
+                    val elementBuilder = LookupElementBuilder.create(cls)
                         .withPresentableText(cls)
                         .withTypeText("Tailwind CSS")
-                        .withIcon(icon)
                     
-                    result.addElement(PrioritizedLookupElement.withPriority(element, 100.0))
+                    // Ajouter l'icône seulement si disponible
+                    val element = if (icon != null) {
+                        elementBuilder.withIcon(icon)
+                    } else {
+                        elementBuilder
+                    }
+                    
+                    val finalElement = element.withInsertHandler { insertionContext, lookupElement -> 
+                        try {
+                            trackSuggestionUsage(cls, position, true)
+                            // Enregistrer l'utilisation dans l'historique (protégé)
+                            try {
+                                historyService.recordClassUsage(lookupElement.lookupString)
+                            } catch (e: Exception) {
+                                logger.debug("[Tailwind] Error recording class usage: ${e.message}")
+                            }
+                        } catch (e: Exception) {
+                            logger.debug("[Tailwind] Error in insert handler: ${e.message}")
+                        }
+                    }
+                    
+                    // Ajouter le preview visuel si disponible
+                    visualPreviewService?.let { previewService ->
+                        try {
+                            val preview = previewService.generatePreview(listOf(cls))
+                            finalElement.withTailText(" ${preview.description}", true)
+                        } catch (e: Exception) {
+                            logger.debug("[Tailwind] Error generating preview for $cls: ${e.message}")
+                        }
+                    }
+                    
+                    // Ajouter avec priorité premium
+                    result.addElement(PrioritizedLookupElement.withPriority(finalElement, priority))
                 } catch (e: Exception) {
-                    logger.error("[Tailwind] Error creating lookup element for $cls: ${e.message}")
+                    // Log mais ne pas bloquer - essayer de créer un élément simple
+                    logger.debug("[Tailwind] Error creating lookup element for $cls: ${e.message}", e)
+                    try {
+                        val simpleElement = LookupElementBuilder.create(cls)
+                            .withPresentableText(cls)
+                            .withTypeText("Tailwind CSS")
+                        result.addElement(PrioritizedLookupElement.withPriority(simpleElement, 50.0))
+                    } catch (e2: Exception) {
+                        // Si même ça échoue, on ignore cette classe
+                        logger.warn("[Tailwind] Failed to create even simple element for $cls: ${e2.message}")
+                    }
                 }
             }
         } catch (e: Exception) {
@@ -165,5 +255,138 @@ class ProjectAwareTailwindCompletionProvider : CompletionProvider<CompletionPara
     private fun isPartOfTailwindClass(char: Char): Boolean {
         // Les classes Tailwind peuvent contenir des lettres, chiffres, tirets, deux-points, crochets, etc.
         return char.isLetterOrDigit() || char == '-' || char == ':' || char == '[' || char == ']' || char == '.' || char == '_'
+    }
+    
+    /**
+     * Initialise les services contextuels
+     */
+    private fun initializeContextualServices(project: com.intellij.openapi.project.Project) {
+        try {
+            contextAnalyzer = TailwindContextAnalyzer()
+            contextualSuggestionsProvider = TailwindContextualSuggestionsProvider()
+            preferenceLearningService = project.getService(TailwindPreferenceLearningService::class.java)
+            patternLibrary = TailwindPatternLibrary()
+            visualPreviewService = TailwindVisualPreviewService()
+            logger.info("[Tailwind] Contextual services initialized")
+        } catch (e: Exception) {
+            logger.warn("[Tailwind] Error initializing contextual services: ${e.message}")
+        }
+    }
+
+    /**
+     * Ajoute les suggestions contextuelles
+     */
+    private fun addContextualSuggestions(
+        parameters: CompletionParameters,
+        context: ProcessingContext,
+        result: CompletionResultSet
+    ) {
+        try {
+            contextualSuggestionsProvider?.generateContextualSuggestions(parameters, result)
+        } catch (e: Exception) {
+            logger.warn("[Tailwind] Error adding contextual suggestions: ${e.message}")
+        }
+    }
+
+    /**
+     * Améliore les suggestions avec l'historique et les préférences
+     */
+    private fun enhanceSuggestionsWithHistory(
+        suggestions: List<String>,
+        prefix: String,
+        historyService: com.github.dilika.tailwindsmartplugin.context.ClassHistoryService,
+        element: com.intellij.psi.PsiElement
+    ): List<String> {
+        // Obtenir les suggestions de l'historique
+        val historicalSuggestions = historyService.getHistoricalSuggestions(prefix, 5)
+        
+        // Combiner avec les suggestions normales, en priorisant l'historique
+        val enhanced = mutableListOf<String>()
+        enhanced.addAll(historicalSuggestions)
+        enhanced.addAll(suggestions.filter { !enhanced.contains(it) })
+        
+        return enhanceSuggestionsWithPreferences(enhanced, element)
+    }
+    
+    /**
+     * Améliore les suggestions avec les préférences utilisateur
+     */
+    private fun enhanceSuggestionsWithPreferences(
+        suggestions: List<String>,
+        element: com.intellij.psi.PsiElement
+    ): List<String> {
+        try {
+            val context = contextAnalyzer?.analyzeElementContext(element)
+            if (context != null && context.confidence > 0.3f) {
+                val personalizedSuggestions = preferenceLearningService?.generatePersonalizedSuggestions(context.elementType) ?: emptyList()
+                val mostUsed = preferenceLearningService?.getMostUsedClasses(5) ?: emptyList()
+                
+                // Combine personalized suggestions with most used classes
+                val enhanced = (personalizedSuggestions + mostUsed + suggestions).distinct()
+                return enhanced
+            }
+        } catch (e: Exception) {
+            logger.warn("[Tailwind] Error enhancing suggestions with preferences: ${e.message}")
+        }
+        return suggestions
+    }
+
+    /**
+     * Enregistre l'utilisation d'une suggestion
+     */
+    private fun trackSuggestionUsage(
+        className: String,
+        element: com.intellij.psi.PsiElement,
+        wasAccepted: Boolean
+    ) {
+        try {
+            val context = contextAnalyzer?.analyzeElementContext(element)
+            if (context != null) {
+                preferenceLearningService?.trackClassUsage(className, context.elementType)
+                logger.debug("[Tailwind] Tracked usage: $className in context: ${context.elementType}")
+            }
+        } catch (e: Exception) {
+            logger.warn("[Tailwind] Error tracking suggestion usage: ${e.message}")
+        }
+    }
+    
+    /**
+     * Calcule la priorité premium pour une classe Tailwind
+     * Basé sur la popularité, le contexte et la correspondance avec le préfixe
+     */
+    private fun calculatePremiumPriority(className: String, prefix: String, element: com.intellij.psi.PsiElement): Double {
+        var priority = 100.0
+        
+        // Boost pour correspondance exacte du préfixe
+        if (className.startsWith(prefix, ignoreCase = true)) {
+            priority += 50.0
+        }
+        
+        // Boost pour classes populaires
+        val popularClasses = listOf(
+            "flex", "grid", "bg-", "text-", "p-", "m-", "rounded", "shadow",
+            "hover:", "focus:", "md:", "lg:", "xl:"
+        )
+        if (popularClasses.any { className.contains(it) }) {
+            priority += 20.0
+        }
+        
+        // Boost pour classes de couleur communes
+        val commonColors = listOf("blue-500", "gray-500", "red-500", "green-500", "white", "black")
+        if (commonColors.any { className.contains(it) }) {
+            priority += 15.0
+        }
+        
+        // Boost basé sur le contexte
+        try {
+            val context = contextAnalyzer?.analyzeElementContext(element)
+            if (context != null && context.confidence > 0.5f) {
+                priority += 30.0
+            }
+        } catch (e: Exception) {
+            // Ignore
+        }
+        
+        return priority
     }
 }

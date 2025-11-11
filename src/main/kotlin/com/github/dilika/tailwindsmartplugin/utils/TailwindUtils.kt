@@ -43,7 +43,11 @@ object TailwindUtils {
         // Fallback to generate from our base logic if config service is not available
         return tailwindClassesCache.getOrPut(projectId) {
             try {
-                generateTailwindClasses()
+                // Utiliser le générateur v4.1 complet
+                val v41Classes = com.github.dilika.tailwindsmartplugin.tailwindv4.TailwindV41ClassGenerator.generateAllClasses()
+                val baseClasses = generateTailwindClasses()
+                // Combiner et dédupliquer
+                (v41Classes + baseClasses).distinct()
             } catch (e: Exception) {
                 logger.error("Error generating Tailwind classes: ${e.message}")
                 emptyList()

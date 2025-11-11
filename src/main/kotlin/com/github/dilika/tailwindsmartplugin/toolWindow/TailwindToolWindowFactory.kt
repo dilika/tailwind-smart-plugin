@@ -1,7 +1,6 @@
 package com.github.dilika.tailwindsmartplugin.toolWindow
 
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -22,7 +21,7 @@ import javax.swing.JTextArea
  */
 @Suppress("unused") // Registered via plugin.xml
 class TailwindToolWindowFactory : ToolWindowFactory {
-    private val logger = thisLogger()
+    private val logger = Logger.getInstance(TailwindToolWindowFactory::class.java)
 
     init {
         logger.info("[Tailwind] Initializing Tailwind ToolWindow")
@@ -46,7 +45,7 @@ class TailwindToolWindowFactory : ToolWindowFactory {
  * Content for the Tailwind CSS tool window
  */
 class TailwindToolWindowContent(private val project: Project) {
-    private val configService = project.service<TailwindConfigService>()
+    private val configService = project.getService(TailwindConfigService::class.java)
     
     fun getContent(): JComponent {
         val panel = JBPanel<JBPanel<*>>()

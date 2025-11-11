@@ -2,7 +2,6 @@ package com.github.dilika.tailwindsmartplugin.folding
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldingGroup
@@ -28,7 +27,9 @@ class TailwindFoldingService {
     private val TAILWIND_GROUP_ID = "tailwind-classes"
 
     companion object {
-        fun getInstance(): TailwindFoldingService = service()
+        fun getInstance(): TailwindFoldingService {
+            return ApplicationManager.getApplication().getService(TailwindFoldingService::class.java)
+        }
     }
     
     /**

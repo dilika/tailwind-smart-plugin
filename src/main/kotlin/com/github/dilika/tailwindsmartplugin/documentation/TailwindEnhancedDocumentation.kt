@@ -185,6 +185,17 @@ class TailwindEnhancedDocumentation {
                     
                     <!-- Variant information if present -->
                     ${if (variants.isNotEmpty()) buildVariantInfo(variants) else ""}
+                    
+                    <!-- Official Documentation Link -->
+                    <div class='official-docs-section' style='margin: 16px 0; padding: 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px;'>
+                        <h4 style='margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: #0369a1;'>📚 Official Documentation</h4>
+                        <a href='${getOfficialDocUrl(className)}' target='_blank' style='color: #0284c7; text-decoration: none; font-size: 12px;'>
+                            View on Tailwind CSS Docs →
+                        </a>
+                    </div>
+                    
+                    <!-- Related Classes / Cheat Sheet -->
+                    ${buildCheatSheetSection(className)}
                 </div>
             </body>
         </html>
@@ -842,5 +853,131 @@ class TailwindEnhancedDocumentation {
                className.startsWith("backdrop-") ||
                className.startsWith("border-x-") ||
                className.startsWith("border-y-")
+    }
+    
+    /**
+     * Gets the official Tailwind CSS documentation URL for a class
+     */
+    private fun getOfficialDocUrl(className: String): String {
+        val baseClass = className.split(":").last()
+        val baseUrl = "https://tailwindcss.com/docs"
+        
+        return when {
+            baseClass.startsWith("bg-") -> "$baseUrl/background-color"
+            baseClass.startsWith("text-") && baseClass.contains("-") -> "$baseUrl/text-color"
+            baseClass.startsWith("text-") -> "$baseUrl/font-size"
+            baseClass.startsWith("font-") -> "$baseUrl/font-weight"
+            baseClass.startsWith("p-") -> "$baseUrl/padding"
+            baseClass.startsWith("m-") -> "$baseUrl/margin"
+            baseClass.startsWith("w-") -> "$baseUrl/width"
+            baseClass.startsWith("h-") -> "$baseUrl/height"
+            baseClass.startsWith("flex") -> "$baseUrl/flex"
+            baseClass.startsWith("grid") -> "$baseUrl/grid-template-columns"
+            baseClass.startsWith("justify-") -> "$baseUrl/justify-content"
+            baseClass.startsWith("items-") -> "$baseUrl/align-items"
+            baseClass.startsWith("border") && !baseClass.contains("radius") -> "$baseUrl/border-width"
+            baseClass.startsWith("rounded") -> "$baseUrl/border-radius"
+            baseClass.startsWith("shadow") -> "$baseUrl/box-shadow"
+            baseClass.startsWith("opacity") -> "$baseUrl/opacity"
+            baseClass.startsWith("transition") -> "$baseUrl/transition-property"
+            baseClass.startsWith("animate") -> "$baseUrl/animation"
+            baseClass.startsWith("scale") -> "$baseUrl/scale"
+            baseClass.startsWith("rotate") -> "$baseUrl/rotate"
+            baseClass.startsWith("translate") -> "$baseUrl/translate"
+            else -> "$baseUrl"
+        }
+    }
+    
+    /**
+     * Builds a cheat sheet section with related classes
+     */
+    private fun buildCheatSheetSection(className: String): String {
+        val relatedClasses = getRelatedClasses(className)
+        if (relatedClasses.isEmpty()) return ""
+        
+        val category = getCategoryForPrefix(extractPrefixAndValue(className.split(":").last()).first)
+        val cheatSheet = getCheatSheetForCategory(category)
+        
+        return buildString {
+            append("<div class='cheatsheet-section' style='margin: 16px 0; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;'>")
+            append("<h4 style='margin: 0; padding: 10px 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-weight: 500;'>📋 Quick Reference</h4>")
+            append("<div style='padding: 12px;'>")
+            
+            // Related classes
+            append("<div style='margin-bottom: 12px;'>")
+            append("<strong style='font-size: 12px; color: #475569;'>Related Classes:</strong>")
+            append("<div style='margin-top: 6px; font-family: monospace; font-size: 11px; color: #64748b;'>")
+            append(relatedClasses.split(", ").joinToString(" • ") { "<code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>$it</code>" })
+            append("</div>")
+            append("</div>")
+            
+            // Cheat sheet for category
+            if (cheatSheet.isNotEmpty()) {
+                append("<div>")
+                append("<strong style='font-size: 12px; color: #475569;'>Common $category Classes:</strong>")
+                append("<div style='margin-top: 6px; font-family: monospace; font-size: 11px; color: #64748b; line-height: 1.6;'>")
+                append(cheatSheet)
+                append("</div>")
+                append("</div>")
+            }
+            
+            append("</div>")
+            append("</div>")
+        }
+    }
+    
+    /**
+     * Gets a cheat sheet for a specific category
+     */
+    private fun getCheatSheetForCategory(category: String): String {
+        return when (category) {
+            "Background" -> """
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>bg-white</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>bg-black</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>bg-blue-500</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>bg-red-500</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>bg-green-500</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>bg-transparent</code>
+            """.trimIndent()
+            "Typography" -> """
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>text-xs</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>text-sm</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>text-base</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>text-lg</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>text-xl</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>font-bold</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>font-semibold</code>
+            """.trimIndent()
+            "Spacing" -> """
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>p-4</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>px-4</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>py-4</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>m-4</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>mx-auto</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>my-4</code>
+            """.trimIndent()
+            "Sizing" -> """
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>w-full</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>w-1/2</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>h-screen</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>min-h-screen</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>max-w-7xl</code>
+            """.trimIndent()
+            "Flexbox" -> """
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>flex</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>flex-col</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>justify-center</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>items-center</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>gap-4</code>
+            """.trimIndent()
+            "Borders" -> """
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>border</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>border-2</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>rounded</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>rounded-lg</code> 
+                <code style='background: #f1f5f9; padding: 2px 4px; border-radius: 3px;'>rounded-full</code>
+            """.trimIndent()
+            else -> ""
+        }
     }
 } // End of TailwindEnhancedDocumentation class
