@@ -75,7 +75,9 @@ class TailwindInvalidClassInspection : LocalInspectionTool() {
                         val textRange = TextRange.create(startOffset, endOffset)
                         
                         // Créer les quick fixes pour chaque suggestion
-                        val quickFixes = result.suggestions.take(5).map { suggestion ->
+                        // FREE: 1 suggestion, PREMIUM: jusqu'à 5 suggestions
+                        val maxSuggestions = if (com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate.isPremium()) 5 else 1
+                        val quickFixes = result.suggestions.take(maxSuggestions).map { suggestion ->
                             TailwindClassQuickFix(className, suggestion, textRange)
                         }.toTypedArray()
                         

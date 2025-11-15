@@ -1,5 +1,6 @@
 package com.github.dilika.tailwindsmartplugin.refactoring
 
+import com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -10,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
 
 /**
  * Service de refactoring automatique pour Tailwind CSS
+ * PREMIUM FEATURE: Toutes les fonctionnalités de refactoring nécessitent une licence premium
  */
 @Service(Service.Level.PROJECT)
 class TailwindRefactoringService(private val project: Project) {
@@ -25,8 +27,12 @@ class TailwindRefactoringService(private val project: Project) {
     /**
      * Consolide les classes redondantes
      * Ex: "p-4 px-2" -> "px-2 py-4" (px-2 remplace p-4 pour l'axe horizontal)
+     * PREMIUM FEATURE
      */
     fun consolidateClasses(classes: List<String>): List<String> {
+        if (!PremiumFeatureGate.checkPremiumAccess("Class Consolidation Refactoring", showUpgradeDialog = true)) {
+            return classes // Retourner les classes inchangées si non premium
+        }
         val consolidated = mutableListOf<String>()
         val processed = mutableSetOf<String>()
         

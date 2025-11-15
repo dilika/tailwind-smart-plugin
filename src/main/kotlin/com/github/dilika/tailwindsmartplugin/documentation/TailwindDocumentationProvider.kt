@@ -1,5 +1,6 @@
 package com.github.dilika.tailwindsmartplugin.documentation
 
+import com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate
 import com.github.dilika.tailwindsmartplugin.utils.TailwindUtils
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationProvider
@@ -12,6 +13,11 @@ import org.json.JSONObject
 
 /**
  * Provides documentation for Tailwind CSS classes
+ * PREMIUM FEATURES:
+ * - Enhanced documentation with examples
+ * - Interactive examples
+ * - CSS equivalents
+ * - Cheat sheet
  */
 @Suppress("unused") // Registered via plugin.xml
 class TailwindDocumentationProvider : AbstractDocumentationProvider() {
@@ -369,23 +375,33 @@ class TailwindDocumentationProvider : AbstractDocumentationProvider() {
             }
             
             try {
-                // Utiliser la documentation enrichie pour toutes les classes
-                val enhancedDoc = enhancedDocumentation.generateDocumentation(className)
+                // Utiliser la documentation enrichie pour toutes les classes - PREMIUM ONLY
+                val enhancedDoc = if (PremiumFeatureGate.isPremium()) {
+                    enhancedDocumentation.generateDocumentation(className)
+                } else {
+                    null // Free: pas de documentation enrichie
+                }
                 
                 if (tailwindClasses.contains(className)) {
                     try {
                         // Found in Tailwind classes - generate rich documentation with enhanced content
                         val richDoc = generateDocForClass(className, project)
-                        // Combine both documentations with enhanced content first
-                        return enhancedDoc + "<hr/>" + richDoc
+                        // Combine both documentations with enhanced content first (if premium)
+                        return if (enhancedDoc != null) {
+                            enhancedDoc + "<hr/>" + richDoc
+                        } else {
+                            richDoc // Free: seulement la documentation de base
+                        }
                     } catch (e: Exception) {
                         logger.warn("Error generating rich documentation: ${e.message}")
                         // On continue avec la documentation simple si la riche échoue
-                        return enhancedDoc.ifEmpty { generateBasicDocumentation(className) }
+                        return enhancedDoc?.ifEmpty { generateBasicDocumentation(className) } 
+                            ?: generateBasicDocumentation(className)
                     }
                 } else {
                     // Not found in standard classes - use enhanced documentation or basic fallback
-                    return enhancedDoc.ifEmpty { generateBasicDocumentation(className) }
+                    return enhancedDoc?.ifEmpty { generateBasicDocumentation(className) } 
+                        ?: generateBasicDocumentation(className)
                 }
             } catch (e: Exception) {
                 logger.warn("Enhanced documentation failed, using basic documentation: ${e.message}")

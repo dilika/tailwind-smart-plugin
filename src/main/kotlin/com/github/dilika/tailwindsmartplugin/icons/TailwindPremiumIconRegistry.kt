@@ -1,5 +1,6 @@
 package com.github.dilika.tailwindsmartplugin.icons
 
+import com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate
 import com.intellij.ui.JBColor
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
@@ -8,6 +9,8 @@ import javax.swing.Icon
 /**
  * Registry d'icônes premium pour Tailwind CSS
  * Style similaire aux meilleurs plugins du marché (VS Code Tailwind IntelliSense)
+ * 
+ * PREMIUM FEATURE: Les icônes colorées premium nécessitent une licence premium
  */
 object TailwindPremiumIconRegistry {
     
@@ -16,8 +19,16 @@ object TailwindPremiumIconRegistry {
     
     /**
      * Obtient une icône premium pour une classe Tailwind
+     * Retourne une icône basique si l'utilisateur n'a pas de licence premium
      */
     fun getPremiumIcon(className: String): Icon {
+        // Vérifier si premium est actif (sans afficher de dialog)
+        val isPremium = PremiumFeatureGate.isPremium()
+        
+        if (!isPremium) {
+            // Retourner une icône basique pour les utilisateurs free
+            return getBasicIcon(className)
+        }
         try {
             iconCache[className]?.let { return it }
             
@@ -50,6 +61,15 @@ object TailwindPremiumIconRegistry {
             // Fallback ultime en cas d'erreur
             return PremiumDefaultIcon(Color(0x6b7280), ICON_SIZE)
         }
+    }
+    
+    /**
+     * Retourne une icône basique pour les utilisateurs free
+     * Simple icône grise sans couleurs ni détails premium
+     */
+    private fun getBasicIcon(className: String): Icon {
+        // Utiliser l'icône par défaut grise pour tous les utilisateurs free
+        return PremiumDefaultIcon(Color(0x9ca3af), ICON_SIZE)
     }
     
     /**

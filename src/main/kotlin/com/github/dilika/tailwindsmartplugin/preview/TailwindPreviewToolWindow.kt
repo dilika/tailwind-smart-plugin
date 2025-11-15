@@ -92,19 +92,33 @@ class TailwindPreviewContent(
         // Toggle dark mode
         val darkModeCheckbox = JCheckBox("Dark mode", false)
         darkModeCheckbox.addActionListener {
-            darkModeEnabled = darkModeCheckbox.isSelected
-            updatePreview()
+            if (com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate.checkPremiumAccess("Dark Mode Preview", showUpgradeDialog = true)) {
+                darkModeEnabled = darkModeCheckbox.isSelected
+                updatePreview()
+            } else {
+                darkModeCheckbox.isSelected = false
+                darkModeEnabled = false
+            }
         }
+        // Désactiver si non premium
+        darkModeCheckbox.isEnabled = com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate.isPremium()
         controlPanel.add(darkModeCheckbox)
         
-        // Responsive breakpoint selector
+        // Responsive breakpoint selector (PREMIUM)
         val breakpointLabel = JBLabel("Breakpoint:")
         controlPanel.add(breakpointLabel)
         val breakpointCombo = JComboBox(arrayOf("", "sm", "md", "lg", "xl", "2xl"))
         breakpointCombo.addActionListener {
-            currentBreakpoint = breakpointCombo.selectedItem?.toString() ?: ""
-            updatePreview()
+            if (com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate.checkPremiumAccess("Responsive Breakpoints Preview", showUpgradeDialog = true)) {
+                currentBreakpoint = breakpointCombo.selectedItem?.toString() ?: ""
+                updatePreview()
+            } else {
+                breakpointCombo.selectedIndex = 0
+                currentBreakpoint = ""
+            }
         }
+        // Désactiver si non premium
+        breakpointCombo.isEnabled = com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate.isPremium()
         controlPanel.add(breakpointCombo)
         
         mainPanel.add(controlPanel, BorderLayout.NORTH)

@@ -20,11 +20,18 @@ import com.github.dilika.tailwindsmartplugin.context.TailwindContextualSuggestio
 import com.github.dilika.tailwindsmartplugin.context.TailwindPreferenceLearningService
 import com.github.dilika.tailwindsmartplugin.context.TailwindPatternLibrary
 import com.github.dilika.tailwindsmartplugin.preview.TailwindVisualPreviewService
+import com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate
 
 /**
  * CompletionContributor for Tailwind CSS classes.
  * This class registers the TailwindCompletionProvider to provide completion
  * suggestions for Tailwind CSS classes in appropriate contexts.
+ * 
+ * PREMIUM FEATURES:
+ * - Intelligent priority calculation
+ * - History-based learning
+ * - Contextual suggestions
+ * - Preference learning
  */
 class TailwindCompletionContributor : CompletionContributor(), DumbAware {
     private val logger = Logger.getInstance(TailwindCompletionContributor::class.java)
@@ -111,8 +118,10 @@ class ProjectAwareTailwindCompletionProvider : CompletionProvider<CompletionPara
                 // Add contextual suggestions first (highest priority)
                 // addContextualSuggestions(parameters, context, result)
             
-            // Add contextual suggestions first (highest priority)
-            addContextualSuggestions(parameters, context, result)
+            // Add contextual suggestions first (highest priority) - PREMIUM ONLY
+            if (PremiumFeatureGate.isPremium()) {
+                addContextualSuggestions(parameters, context, result)
+            }
             
             // Get Tailwind classes and add them to completion results
             val classes = TailwindUtils.getTailwindClasses(project)
@@ -121,9 +130,14 @@ class ProjectAwareTailwindCompletionProvider : CompletionProvider<CompletionPara
             // Enregistrer l'utilisation dans l'historique si une classe est sélectionnée
             // (sera appelé lors de la sélection)
             
-            // Enhance suggestions with user preferences and history
+            // Enhance suggestions with user preferences and history - PREMIUM ONLY
             val historyService = com.github.dilika.tailwindsmartplugin.context.ClassHistoryService.getInstance(project)
-            val enhancedClasses = enhanceSuggestionsWithHistory(classes, prefix, historyService, position)
+            val enhancedClasses = if (PremiumFeatureGate.isPremium()) {
+                enhanceSuggestionsWithHistory(classes, prefix, historyService, position)
+            } else {
+                // Free: pas d'amélioration basée sur l'historique
+                classes
+            }
             
             val matchingClasses = enhancedClasses.filter { cls ->
                 val matches = cls.startsWith(prefix, ignoreCase = true) ||
@@ -152,9 +166,14 @@ class ProjectAwareTailwindCompletionProvider : CompletionProvider<CompletionPara
                         }
                     }
                     
-                    // Déterminer la priorité basée sur la popularité et le contexte
+                    // Déterminer la priorité basée sur la popularité et le contexte - PREMIUM ONLY
                     val priority = try {
-                        calculatePremiumPriority(cls, prefix, position)
+                        if (PremiumFeatureGate.isPremium()) {
+                            calculatePremiumPriority(cls, prefix, position)
+                        } else {
+                            // Free: priorité basique basée uniquement sur le préfixe
+                            if (cls.startsWith(prefix, ignoreCase = true)) 50.0 else 100.0
+                        }
                     } catch (e: Exception) {
                         logger.debug("[Tailwind] Error calculating priority for $cls: ${e.message}")
                         100.0 // Priorité par défaut
@@ -174,24 +193,28 @@ class ProjectAwareTailwindCompletionProvider : CompletionProvider<CompletionPara
                     val finalElement = element.withInsertHandler { insertionContext, lookupElement -> 
                         try {
                             trackSuggestionUsage(cls, position, true)
-                            // Enregistrer l'utilisation dans l'historique (protégé)
-                            try {
-                                historyService.recordClassUsage(lookupElement.lookupString)
-                            } catch (e: Exception) {
-                                logger.debug("[Tailwind] Error recording class usage: ${e.message}")
+                            // Enregistrer l'utilisation dans l'historique (protégé) - PREMIUM ONLY
+                            if (PremiumFeatureGate.isPremium()) {
+                                try {
+                                    historyService.recordClassUsage(lookupElement.lookupString)
+                                } catch (e: Exception) {
+                                    logger.debug("[Tailwind] Error recording class usage: ${e.message}")
+                                }
                             }
                         } catch (e: Exception) {
                             logger.debug("[Tailwind] Error in insert handler: ${e.message}")
                         }
                     }
                     
-                    // Ajouter le preview visuel si disponible
-                    visualPreviewService?.let { previewService ->
-                        try {
-                            val preview = previewService.generatePreview(listOf(cls))
-                            finalElement.withTailText(" ${preview.description}", true)
-                        } catch (e: Exception) {
-                            logger.debug("[Tailwind] Error generating preview for $cls: ${e.message}")
+                    // Ajouter le preview visuel si disponible - PREMIUM ONLY
+                    if (PremiumFeatureGate.isPremium()) {
+                        visualPreviewService?.let { previewService ->
+                            try {
+                                val preview = previewService.generatePreview(listOf(cls))
+                                finalElement.withTailText(" ${preview.description}", true)
+                            } catch (e: Exception) {
+                                logger.debug("[Tailwind] Error generating preview for $cls: ${e.message}")
+                            }
                         }
                     }
                     
@@ -310,11 +333,17 @@ class ProjectAwareTailwindCompletionProvider : CompletionProvider<CompletionPara
     
     /**
      * Améliore les suggestions avec les préférences utilisateur
+     * PREMIUM ONLY: L'analyse contextuelle avancée nécessite une licence premium
      */
     private fun enhanceSuggestionsWithPreferences(
         suggestions: List<String>,
         element: com.intellij.psi.PsiElement
     ): List<String> {
+        // Seulement si premium
+        if (!PremiumFeatureGate.isPremium()) {
+            return suggestions
+        }
+        
         try {
             val context = contextAnalyzer?.analyzeElementContext(element)
             if (context != null && context.confidence > 0.3f) {
@@ -333,12 +362,18 @@ class ProjectAwareTailwindCompletionProvider : CompletionProvider<CompletionPara
 
     /**
      * Enregistre l'utilisation d'une suggestion
+     * PREMIUM ONLY: L'apprentissage des préférences nécessite une licence premium
      */
     private fun trackSuggestionUsage(
         className: String,
         element: com.intellij.psi.PsiElement,
         wasAccepted: Boolean
     ) {
+        // Seulement si premium
+        if (!PremiumFeatureGate.isPremium()) {
+            return
+        }
+        
         try {
             val context = contextAnalyzer?.analyzeElementContext(element)
             if (context != null) {

@@ -257,6 +257,10 @@
                 serviceImplementation="com.github.dilika.tailwindsmartplugin.refactoring.TailwindRefactoringService"/>
         <applicationService
                 serviceImplementation="com.github.dilika.tailwindsmartplugin.settings.TailwindPluginSettings"/>
+        <applicationService
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.license.TailwindLicenseService"/>
+        <applicationService
+                serviceImplementation="com.github.dilika.tailwindsmartplugin.license.TailwindLicenseSettings"/>
         
         <!-- Settings UI -->
         <applicationConfigurable parentId="tools"

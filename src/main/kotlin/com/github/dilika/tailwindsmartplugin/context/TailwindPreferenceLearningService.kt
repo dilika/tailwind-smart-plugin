@@ -1,10 +1,15 @@
 package com.github.dilika.tailwindsmartplugin.context
 
+import com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.diagnostic.Logger
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * Service d'apprentissage des préférences utilisateur
+ * PREMIUM FEATURE: L'apprentissage des préférences nécessite une licence premium
+ */
 @Service(Service.Level.PROJECT)
 class TailwindPreferenceLearningService(private val project: Project) {
     
@@ -17,8 +22,14 @@ class TailwindPreferenceLearningService(private val project: Project) {
     
     /**
      * Enregistre l'utilisation d'une classe Tailwind
+     * PREMIUM ONLY: L'apprentissage nécessite une licence premium
      */
     fun trackClassUsage(className: String, context: String) {
+        // Seulement si premium
+        if (!PremiumFeatureGate.isPremium()) {
+            return
+        }
+        
         try {
             classUsageCount.merge(className, 1) { old, new -> old + new }
             
@@ -65,8 +76,14 @@ class TailwindPreferenceLearningService(private val project: Project) {
     
     /**
      * Génère des suggestions basées sur les préférences
+     * PREMIUM ONLY: Les suggestions personnalisées nécessitent une licence premium
      */
     fun generatePersonalizedSuggestions(context: String): List<String> {
+        // Seulement si premium
+        if (!PremiumFeatureGate.isPremium()) {
+            return emptyList()
+        }
+        
         val contextPrefs = getContextPreferences(context)
         val mostUsed = getMostUsedClasses(5)
         
@@ -96,6 +113,7 @@ data class UsageStatistics(
     val mostUsedClass: String,
     val contextsTracked: Int
 )
+
 
 
 

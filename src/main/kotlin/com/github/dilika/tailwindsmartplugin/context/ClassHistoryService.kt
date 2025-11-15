@@ -1,5 +1,6 @@
 package com.github.dilika.tailwindsmartplugin.context
 
+import com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -7,6 +8,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 /**
  * Service pour suivre l'historique des classes utilisées et suggérer basé sur l'historique
+ * PREMIUM FEATURE: L'historique et l'apprentissage nécessitent une licence premium
  */
 @Service(Service.Level.PROJECT)
 class ClassHistoryService(private val project: Project) {
@@ -32,8 +34,14 @@ class ClassHistoryService(private val project: Project) {
     
     /**
      * Enregistre l'utilisation d'une classe
+     * PREMIUM ONLY: L'historique nécessite une licence premium
      */
     fun recordClassUsage(className: String) {
+        // Seulement si premium
+        if (!PremiumFeatureGate.isPremium()) {
+            return
+        }
+        
         if (className.isBlank()) return
         
         // Ajouter à l'historique
@@ -81,8 +89,14 @@ class ClassHistoryService(private val project: Project) {
     
     /**
      * Obtient les suggestions basées sur l'historique pour un préfixe
+     * PREMIUM ONLY: Les suggestions basées sur l'historique nécessitent une licence premium
      */
     fun getHistoricalSuggestions(prefix: String, limit: Int = 5): List<String> {
+        // Seulement si premium
+        if (!PremiumFeatureGate.isPremium()) {
+            return emptyList()
+        }
+        
         return classFrequency.entries
             .filter { it.key.startsWith(prefix) }
             .sortedByDescending { it.value }

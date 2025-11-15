@@ -1,5 +1,6 @@
 package com.github.dilika.tailwindsmartplugin.audit
 
+import com.github.dilika.tailwindsmartplugin.license.PremiumFeatureGate
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiFile
@@ -10,6 +11,7 @@ import java.util.regex.Pattern
 
 /**
  * Service d'audit intelligent pour le code Tailwind CSS
+ * PREMIUM FEATURE: L'audit complet nécessite une licence premium
  */
 class TailwindCodeAuditor {
     
@@ -17,8 +19,15 @@ class TailwindCodeAuditor {
     
     /**
      * Effectue un audit complet d'un fichier
+     * PREMIUM ONLY: L'audit complet nécessite une licence premium
      */
     fun auditTailwindUsage(file: PsiFile): AuditReport {
+        // Vérifier l'accès premium
+        if (!PremiumFeatureGate.checkPremiumAccess("Code Audit & Analytics", showUpgradeDialog = true)) {
+            return AuditReport.empty(file.name).copy(
+                score = 0
+            )
+        }
         val issues = mutableListOf<AuditIssue>()
         val statistics = TailwindStatistics()
         
